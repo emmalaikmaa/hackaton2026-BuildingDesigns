@@ -56,15 +56,97 @@ map.addLayer(clusterGroup);
 // KATEGOORIAD
 // ====================================================
 
+/**
+ * Leiab hoone kategooria otstarbe teksti järgi.
+ * Kontrollitakse spetsiifilisemast üldisemani — esimene vaste võidab.
+ */
 function getCategory(otstarve) {
   if (!otstarve) return 'muu';
   const o = otstarve.toLowerCase();
-  if (o.includes('elamu')) return 'elamu';
-  if (o.includes('kuur')) return 'kuur';
-  if (o.includes('pesuköök') || o.includes('pesukook')) return 'pesukook';
-  if (o.includes('tall')) return 'tall';
+
+  // Kool / haridus (enne kiriku, sest "seminar" ja "kirikukool" kattuvad)
+  if (o.includes('kool') || o.includes('gümnaasium') || o.includes('seminar') ||
+      o.includes('ülikool') || o.includes('lasteaed') || o.includes('haridus'))
+    return 'kool';
+
+  // Kirik / usuhoone
+  if (o.includes('kirik') || o.includes('kabel') || o.includes('sünagoog') ||
+      o.includes('palvela'))
+    return 'kirik';
+
+  // Haigla / meditsiin
+  if (o.includes('haigla') || o.includes('kliinik') || o.includes('apteek') ||
+      o.includes('ambulat') || o.includes('sanitaar'))
+    return 'haigla';
+
+  // Pood / kauplus
+  if (o.includes('pood') || o.includes('kauplus') || o.includes('laat') ||
+      o.includes('äri') || o.includes('ladu') || o.includes('magasin'))
+    return 'pood';
+
+  // Tehas / tööstus
+  if (o.includes('tehas') || o.includes('vabrik') || o.includes('töökoda') ||
+      o.includes('veski') || o.includes('tööstus'))
+    return 'tehas';
+
+  // Ait / salvestus
+  if (o.includes('ait') || o.includes('kelder') || o.includes('salv'))
+    return 'ait';
+
+  // Saun
+  if (o.includes('saun') || o.includes('pesemaja'))
+    return 'saun';
+
+  // Pesuköök (enne "köök" üldist, enne elamut)
+  if (o.includes('pesuköök') || o.includes('pesukook'))
+    return 'pesukook';
+
+  // Tall / loomapidamine
+  if (o.includes('tall') || o.includes('laut') || o.includes('sigala') ||
+      o.includes('kanala'))
+    return 'tall';
+
+  // Kuur
+  if (o.includes('kuur'))
+    return 'kuur';
+
+  // Elamu (viimaseks, sest nt "elumaja" võib teistes koosseisus esineda)
+  if (o.includes('elamu') || o.includes('elumaja'))
+    return 'elamu';
+
   return 'muu';
 }
+
+
+/**
+ * SVG ikoonid kategooriate jaoks.
+ * Igaüks on valge viewBox 0 0 24 24, täidab kõik pin keskse osa.
+ */
+const CATEGORY_ICONS = {
+  elamu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>`,
+
+  kuur: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6 8 6"/><path d="M5 11v9h14v-9"/><rect x="10" y="13" width="4" height="7"/></svg>`,
+
+  pesukook: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="5"/><rect x="4" y="5" width="16" height="16" rx="1"/><circle cx="7" cy="8" r="0.5" fill="currentColor"/><circle cx="10" cy="8" r="0.5" fill="currentColor"/></svg>`,
+
+  tall: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6v10H3z"/><path d="M10 20v-6h4v6"/><path d="M3 14h18"/></svg>`,
+
+  kool: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+
+  kirik: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="9"/><line x1="9" y1="5" x2="15" y2="5"/><path d="M6 10v10h12V10l-6-4z"/></svg>`,
+
+  haigla: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`,
+
+  pood: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.5 12H5.5z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>`,
+
+  tehas: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V9l5 3V9l5 3V6l8 14z"/><line x1="7" y1="20" x2="7" y2="16"/><line x1="12" y1="20" x2="12" y2="16"/><line x1="17" y1="20" x2="17" y2="16"/></svg>`,
+
+  ait: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6v10H3z"/><rect x="9" y="13" width="6" height="7"/><line x1="3" y1="14" x2="21" y2="14"/></svg>`,
+
+  saun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14c0-4 4-7 8-7s8 3 8 7"/><path d="M8 10c-1 2-1 4 0 5"/><path d="M12 8c-1 3-1 5 0 7"/><path d="M16 10c1 2 1 4 0 5"/><line x1="4" y1="18" x2="20" y2="18"/></svg>`,
+
+  muu: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="14" height="13"/><line x1="5" y1="11" x2="19" y2="11"/><line x1="12" y1="11" x2="12" y2="20"/></svg>`,
+};
 
 
 // ====================================================
@@ -100,12 +182,15 @@ async function searchByOwner(name) {
 function createMarker(house) {
   const category = getCategory(house.otstarve);
   const pinClass = `pin-${category}`;
+  const iconSvg = CATEGORY_ICONS[category] || CATEGORY_ICONS.muu;
 
   const icon = L.divIcon({
     className: '',
-    html: `<div class="custom-pin ${pinClass}" data-id="${house.id}"></div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 22],
+    html: `<div class="custom-pin ${pinClass}" data-id="${house.id}">
+             <div class="custom-pin-icon">${iconSvg}</div>
+           </div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
   });
 
   const marker = L.marker(
@@ -887,6 +972,36 @@ document.getElementById('reset-filters').addEventListener('click', () => {
 
 
 // ====================================================
+// LEGENDI EHITAMINE
+// ====================================================
+
+function buildLegend() {
+  const categories = [
+    { key: 'elamu',    label: 'Elamu' },
+    { key: 'kuur',     label: 'Kuur' },
+    { key: 'pesukook', label: 'Pesuköök' },
+    { key: 'tall',     label: 'Tall' },
+    { key: 'kool',     label: 'Kool' },
+    { key: 'kirik',    label: 'Kirik' },
+    { key: 'haigla',   label: 'Haigla' },
+    { key: 'pood',     label: 'Pood' },
+    { key: 'tehas',    label: 'Tehas' },
+    { key: 'ait',      label: 'Ait' },
+    { key: 'saun',     label: 'Saun' },
+    { key: 'muu',      label: 'Muu' },
+  ];
+
+  const container = document.getElementById('legend-container');
+  container.innerHTML = categories.map(c => `
+    <div class="legend-item">
+      <span class="legend-pin pin-${c.key}">${CATEGORY_ICONS[c.key]}</span>
+      ${c.label}
+    </div>
+  `).join('');
+}
+
+
+// ====================================================
 // LAADIMINE
 // ====================================================
 
@@ -906,6 +1021,7 @@ function showError(msg) {
 // ====================================================
 
 async function init() {
+  buildLegend();  // Ehita legend kohe (ei oota hoonete laadimist)
   console.log('Laadime hooneid backendist...');
   try {
     allHouses = await fetchAllHouses();
