@@ -11,7 +11,7 @@ def get_buildings(db: Session = Depends(get_db)):
     return db.query(Building).filter(
         Building.latitude.isnot(None),
         Building.longitude.isnot(None)
-    ).all()
+    ).limit(400).all()
 
 @router.get("/{building_id}", response_model=BuildingDetail)
 def get_building(building_id: int, request: Request, db: Session = Depends(get_db)):
