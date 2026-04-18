@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="UTF-8">
+<title>Tartu Building designs · 1870–1940</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+<!-- Leaflet kaardi teek -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+ 
+<!-- noUiSlider ajariba jaoks -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
+ 
+<!-- Fontid -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+ 
+<!-- Meie enda stiilifail -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+ 
+<div class="app">
+ 
+  <!-- KÜLGPANEEL -->
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>Tartu majad</h1>
+      <div class="subtitle">1870 — 1940</div>
+    </div>
+ 
+    <div class="section">
+      <div class="section-title">Filtrid</div>
+      <div class="filter-group">
+        <label>
+          <input type="checkbox" id="filter-water" checked>
+          <span>Ainult veevarustusega</span>
+        </label>
+        <label>
+          <input type="checkbox" id="filter-no-water" checked>
+          <span>Ilma veevarustuseta</span>
+        </label>
+      </div>
+    </div>
+ 
+    <div class="section">
+      <div class="section-title">Statistika</div>
+      <div class="stats">
+        <span class="count" id="visible-count">0</span>
+        <span class="label">nähtavat maja</span>
+      </div>
+    </div>
+ 
+    <div class="section">
+      <div class="section-title">Legend</div>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-pin pin-water"></span>
+          Veevarustusega
+        </div>
+        <div class="legend-item">
+          <span class="legend-pin pin-standard"></span>
+          Ilma veevarustuseta
+        </div>
+      </div>
+    </div>
+  </aside>
+ 
+  <!-- KAART -->
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="year-badge">
+      <div class="year" id="year-display">1900</div>
+      <div class="label">aasta</div>
+    </div>
+  </div>
+ 
+  <!-- AJARIBA -->
+  <div class="timeline">
+    <div class="timeline-title">Ajariba · 1870 — 1940</div>
+    <div id="slider"></div>
+  </div>
+ 
+</div>
+ 
+<script src="data.js"></script>
+<script src="script.js"></script>
+ 
+</body>
+</html>
