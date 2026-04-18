@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, Numeric, Date, Float, ForeignKey
+from sqlalchemy import Column, Integer, Text, Numeric, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from server.database import Base
 
@@ -44,8 +44,9 @@ class Building(Base):
     projekti_kuupaev                = Column(Date)
     projekti_kinnitamise_kuupaev    = Column(Date)
     fondi_nimi                      = Column(Text)
-    lat                             = Column(Float)
-    lng                             = Column(Float)
+    aadress                         = Column(Text)
+    latitude                        = Column(Numeric)
+    longitude                       = Column(Numeric)
 
     owners = relationship("Owner", secondary="hooned_omanikud", back_populates="buildings")
 

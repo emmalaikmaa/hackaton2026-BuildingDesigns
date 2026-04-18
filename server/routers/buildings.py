@@ -9,8 +9,8 @@ router = APIRouter(prefix="/buildings", tags=["buildings"])
 @router.get("/", response_model=list[BuildingDetail])
 def get_buildings(db: Session = Depends(get_db)):
     return db.query(Building).filter(
-        Building.lat.isnot(None),
-        Building.lng.isnot(None)
+        Building.latitude.isnot(None),
+        Building.longitude.isnot(None)
     ).all()
 
 @router.get("/{building_id}", response_model=BuildingDetail)

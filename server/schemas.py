@@ -18,7 +18,7 @@ class OwnerDetail(BaseModel):
 
 class BuildingDetail(BaseModel):
     id: int
-    failid: list[str] = []
+    failid: str
     linn: str | None
     tanav: str | None
     linnaosa: Decimal | None
@@ -56,9 +56,10 @@ class BuildingDetail(BaseModel):
     projekti_kuupaev: date | None
     projekti_kinnitamise_kuupaev: date | None
     fondi_nimi: str | None
-    lat: float | None
-    lng: float | None
-    schematic_url: list[str] = []
+    aadress: str | None
+    latitude: Decimal | None
+    longitude: Decimal | None
+    schematic_urls: list[str] = []
     owners: list[OwnerDetail] = []
 
     class Config:

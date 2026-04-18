@@ -26,7 +26,7 @@ Make sure a .env file exists in the project root with:
 Replace user, pass, and buildings_db with your actual credentials.
 
 6. START THE SERVER
-    uvicorn app.main:app --reload
+    uvicorn server.main:app --reload
 
 The --reload flag restarts the server automatically when you edit a file.
 
