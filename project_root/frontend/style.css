@@ -685,3 +685,100 @@ html, body {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 500;
 }
+
+/* ---- KAARDI VAHETAJA ---- */
+.map-switcher {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  z-index: 1200;
+  width: 240px;
+  background: rgba(250, 246, 238, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 20px rgba(26, 22, 18, 0.14);
+  backdrop-filter: blur(4px);
+}
+
+.map-switcher-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, rgba(139,46,31,0.06) 0%, rgba(196,101,79,0.03) 100%);
+}
+
+.map-switcher-row {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.map-switcher-row:last-child {
+  border-bottom: none;
+}
+
+.map-switcher-label {
+  display: block;
+  margin-bottom: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.map-switcher-select {
+  width: 100%;
+  padding: 7px 10px;
+  font-family: 'Fraunces', serif;
+  font-size: 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%234a4038' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.map-switcher-select:hover,
+.map-switcher-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.map-switcher-range {
+  width: 100%;
+  appearance: none;
+  height: 6px;
+  background: var(--line);
+  border-radius: 999px;
+  outline: none;
+}
+
+.map-switcher-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(139,46,31,0.25);
+  cursor: pointer;
+}
+
+.map-switcher-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(139,46,31,0.25);
+  cursor: pointer;
+}

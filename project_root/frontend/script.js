@@ -23,10 +23,25 @@ const map = L.map('map', {
   zoomControl: true,
 });
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+const currentMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap',
   maxZoom: 19,
-}).addTo(map);
+});
+
+
+// Vanaaegne kaart: Tartu linna plaan 1927
+const oldMap1927 = L.tileLayer.wms('https://xgis.maaamet.ee/xgis2/service/1h2s3j9?fbclid=IwY2xjawRQc_5leHRuA2FlbQIxMABicmlkETB1RndxaTYyZW5qYUdueE1Yc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHuf2HbwskTAgYRlIBT1WhtiLLqpq2ku64H0Qpj3dqOnweB6_ip5Ath2sI4KS_aem_yKzMWBOeHPxu4rEITsOkbg', {
+  layers: 'tartu_plaan_1927',
+  format: 'image/png',
+  transparent: false,
+  attribution: 'Maa- ja Ruumiamet / Rahvusarhiiv'
+});
+
+currentMap.addTo(map);
+
+
+const historicMapSelect = document.getElementById('historic-map-select');
+
 
 const clusterGroup = L.markerClusterGroup({
   maxClusterRadius: 50,
@@ -431,6 +446,29 @@ function handleOwnerSearch() {
     }
   }, 400);
 }
+
+// kaardi vahetus
+
+function switchBaseMap(value) {
+  if (value === 'current') {
+    if (map.hasLayer(oldMap1927)) {
+      map.removeLayer(oldMap1927);
+    }
+  }
+
+  if (value === 'historic') {
+    if (!map.hasLayer(oldMap1927)) {
+      oldMap1927.addTo(map);
+    }
+  }
+}
+
+historicMapSelect.addEventListener('change', (e) => {
+  switchBaseMap(e.target.value);
+});
+
+// algseis
+switchBaseMap(historicMapSelect.value);
 
 
 // ====================================================

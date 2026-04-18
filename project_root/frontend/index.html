@@ -156,6 +156,22 @@
   <!-- KAART -->
   <div class="map-container">
     <div id="map"></div>
+    <div class="map-switcher">
+      <div class="map-switcher-title">Kaart</div>
+
+      <div class="map-switcher-row">
+        <label for="historic-map-select" class="map-switcher-label">Aluskaart</label>
+        <select id="historic-map-select" class="map-switcher-select">
+          <option value="current">Praegune kaart</option>
+          <option value="historic">Tartu 1927</option>
+        </select>
+      </div>
+
+      <div class="map-switcher-row" id="historic-opacity-wrap" style="display:none;">
+        <label for="historic-opacity" class="map-switcher-label">Läbipaistvus</label>
+        <input id="historic-opacity" class="map-switcher-range" type="range" min="0" max="100" value="70">
+      </div>
+    </div>
     <div class="year-badge">
       <div class="year" id="year-display">1900</div>
       <div class="label">aasta</div>
