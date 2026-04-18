@@ -483,12 +483,23 @@ html, body {
 }
 
 /* Piltide galerii (horisontaalne scroll) */
+.detail-gallery-wrapper {
+  position: relative;
+  background: var(--line);
+}
+
 .detail-gallery {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   background: var(--line);
   min-height: 280px;
+  scroll-behavior: smooth;
+  scrollbar-width: none;        /* Firefox */
+}
+
+.detail-gallery::-webkit-scrollbar {
+  display: none;                 /* Chrome/Safari */
 }
 
 .detail-gallery.empty {
@@ -506,6 +517,44 @@ html, body {
   background-position: center;
   background-repeat: no-repeat;
   background-color: #2a2218;
+  cursor: zoom-in;
+  transition: opacity 0.2s;
+}
+
+.detail-gallery-item:hover {
+  opacity: 0.92;
+}
+
+/* Nooled */
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background: rgba(26, 22, 18, 0.7);
+  color: var(--paper);
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: background 0.2s;
+}
+
+.gallery-arrow:hover {
+  background: var(--accent);
+}
+
+.gallery-arrow.prev { left: 12px; }
+.gallery-arrow.next { right: 12px; }
+
+.gallery-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 /* Galeriilaadimise indikaator (keskel) */
@@ -536,6 +585,98 @@ html, body {
   height: 6px;
   border-radius: 50%;
   background: var(--line);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.detail-gallery-dot.active {
+  background: var(--accent);
+}
+
+/* ---- LIGHTBOX (täisekraan pildi jaoks) ---- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.lightbox.open {
+  display: flex;
+}
+
+.lightbox img {
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.lightbox-close:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.lightbox-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.lightbox-arrow:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.lightbox-arrow.prev { left: 24px; }
+.lightbox-arrow.next { right: 24px; }
+
+.lightbox-counter {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 14px;
+  border-radius: 20px;
 }
 
 .detail-body {
