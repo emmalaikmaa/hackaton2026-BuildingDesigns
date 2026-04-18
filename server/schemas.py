@@ -16,14 +16,6 @@ class OwnerDetail(BaseModel):
     class Config:
         from_attributes = True
 
-class BuildingPin(BaseModel):
-    id: int
-    lat: float | None
-    lng: float | None
-
-    class Config:
-        from_attributes = True
-
 class BuildingDetail(BaseModel):
     id: int
     failid: list[str] = []
