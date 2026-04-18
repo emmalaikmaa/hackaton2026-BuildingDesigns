@@ -191,31 +191,283 @@ function linnaosaNimi(nr) {
   return nr ? `Linnaosa ${nr}` : '—';
 }
 
+// ====================================================
+// GALERII (pildid) + LIGHTBOX
+// ====================================================
+
+let currentGalleryUrls = [];
+let currentGalleryIndex = 0;
+
 function buildGallery(urls) {
   const gallery = document.getElementById('detail-gallery');
+  const prevBtn = document.getElementById('gallery-prev');
+  const nextBtn = document.getElementById('gallery-next');
+
   gallery.classList.remove('empty');
+  currentGalleryUrls = urls || [];
+  currentGalleryIndex = 0;
 
   if (!urls || urls.length === 0) {
     gallery.classList.add('empty');
-    gallery.innerHTML = '<div class="detail-gallery-item"></div>';
+    gallery.innerHTML = '<div class="detail-gallery-item" style="cursor: default;"></div>';
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
     return;
   }
 
   // Piltide listid
-  const items = urls.map(url =>
-    `<div class="detail-gallery-item" style="background-image: url('${url}');"></div>`
+  const items = urls.map((url, i) =>
+    `<div class="detail-gallery-item" style="background-image: url('${url}');" data-index="${i}"></div>`
   ).join('');
 
-  // Punktid kui piltide on rohkem kui 1
-  let dots = '';
+  gallery.innerHTML = items;
+
+  // Nooled - näita ainult kui mitu pilti
   if (urls.length > 1) {
-    dots = '<div class="detail-gallery-dots">' +
-      urls.map(() => '<span class="detail-gallery-dot"></span>').join('') +
-      '</div>';
+    prevBtn.style.display = 'flex';
+    nextBtn.style.display = 'flex';
+  } else {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
   }
 
-  gallery.innerHTML = items + dots;
+  // Klikk pildil → lightbox (anname kaasa ka klikitud element)
+  gallery.querySelectorAll('.detail-gallery-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.index);
+      if (!isNaN(idx)) openLightbox(idx, el);
+    });
+  });
+
+  // Uuenda nupud vastavalt scrolli positsioonile
+  updateGalleryArrows();
 }
+
+function scrollToGalleryIndex(index) {
+  const gallery = document.getElementById('detail-gallery');
+  if (!gallery) return;
+  const items = gallery.querySelectorAll('.detail-gallery-item');
+  if (items[index]) {
+    currentGalleryIndex = index;
+    gallery.scrollTo({
+      left: items[index].offsetLeft,
+      behavior: 'smooth',
+    });
+    updateGalleryArrows();
+  }
+}
+
+function updateGalleryArrows() {
+  const prevBtn = document.getElementById('gallery-prev');
+  const nextBtn = document.getElementById('gallery-next');
+  prevBtn.disabled = currentGalleryIndex === 0;
+  nextBtn.disabled = currentGalleryIndex >= currentGalleryUrls.length - 1;
+}
+
+// Noolenupud galeriis
+document.getElementById('gallery-prev').addEventListener('click', () => {
+  if (currentGalleryIndex > 0) scrollToGalleryIndex(currentGalleryIndex - 1);
+});
+document.getElementById('gallery-next').addEventListener('click', () => {
+  if (currentGalleryIndex < currentGalleryUrls.length - 1)
+    scrollToGalleryIndex(currentGalleryIndex + 1);
+});
+
+// Jälgi käsitsi scroll'imist, uuenda index
+document.getElementById('detail-gallery').addEventListener('scroll', (e) => {
+  const gallery = e.target;
+  const itemWidth = gallery.offsetWidth;
+  const newIndex = Math.round(gallery.scrollLeft / itemWidth);
+  if (newIndex !== currentGalleryIndex) {
+    currentGalleryIndex = newIndex;
+    updateGalleryArrows();
+  }
+});
+
+
+// ====================================================
+// LIGHTBOX (FLIP tehnika - sujuv zoom animatsioon)
+// ====================================================
+
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const lightboxCounter = document.getElementById('lightbox-counter');
+let lightboxIndex = 0;
+let sourceElement = null;
+
+/**
+ * FLIP animatsioon:
+ *  - Pilt on CSS-s keskel (left:50%, top:50%, translate(-50%,-50%))
+ *  - Algsesse positsiooni paneme ta transform'iga: transform: ...scale(...) translate(...)
+ *  - Järgmises frame'is eemaldame transformi → CSS transition mängib
+ */
+function openLightbox(index, clickedElement) {
+  if (!currentGalleryUrls || currentGalleryUrls.length === 0) return;
+  lightboxIndex = index;
+  sourceElement = clickedElement;
+
+  const url = currentGalleryUrls[index];
+
+  // Määra pilt ja ava lightbox (pilt läheb automaatselt keskele CSS-st)
+  lightboxImg.classList.remove('animate');
+  lightboxImg.src = url;
+  lightbox.classList.add('open');
+  lightbox.classList.remove('ready');
+
+  // Oota kuni pilt laetud, siis käivita animatsioon
+  const startAnimation = () => {
+    const sourceRect = clickedElement.getBoundingClientRect();
+    const targetRect = lightboxImg.getBoundingClientRect();
+
+    if (targetRect.width === 0 || targetRect.height === 0) {
+      // Pilt pole veel suurust võtnud - proovi uuesti
+      requestAnimationFrame(startAnimation);
+      return;
+    }
+
+    // FLIP: arvuta transform mis viib pildi algsesse positsiooni
+    const scaleX = sourceRect.width / targetRect.width;
+    const scaleY = sourceRect.height / targetRect.height;
+    const translateX = sourceRect.left + sourceRect.width / 2 - (targetRect.left + targetRect.width / 2);
+    const translateY = sourceRect.top + sourceRect.height / 2 - (targetRect.top + targetRect.height / 2);
+
+    // 1. Pane pilt algsesse positsiooni (ILMA transitioniTA)
+    lightboxImg.style.transform =
+      `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+
+    // Force reflow
+    lightboxImg.offsetHeight;
+
+    // 2. Lisa transition ja eemalda transform → animatsioon käib
+    requestAnimationFrame(() => {
+      lightboxImg.classList.add('animate');
+      lightboxImg.style.transform = 'translate(-50%, -50%)';
+
+      setTimeout(() => {
+        lightbox.classList.add('ready');
+      }, 350);
+    });
+  };
+
+  if (lightboxImg.complete && lightboxImg.naturalWidth > 0) {
+    // Pilt juba cache'is - kohe algusse
+    requestAnimationFrame(startAnimation);
+  } else {
+    // Ootame laadimist
+    lightboxImg.onload = () => {
+      requestAnimationFrame(startAnimation);
+    };
+  }
+
+  updateLightboxCounter();
+  updateLightboxArrows();
+}
+
+function closeLightbox() {
+  if (!lightbox.classList.contains('open')) return;
+
+  lightbox.classList.remove('ready');
+  lightbox.classList.add('closing');
+
+  // Kui source elementi pole, lihtsalt sulgeme
+  if (!sourceElement) {
+    lightbox.classList.remove('open', 'closing');
+    lightboxImg.classList.remove('animate');
+    lightboxImg.style.transform = 'translate(-50%, -50%)';
+    lightboxImg.src = '';
+    return;
+  }
+
+  // Arvuta transform algsesse positsiooni
+  const sourceRect = sourceElement.getBoundingClientRect();
+  const targetRect = lightboxImg.getBoundingClientRect();
+
+  const scaleX = sourceRect.width / targetRect.width;
+  const scaleY = sourceRect.height / targetRect.height;
+  const translateX = sourceRect.left + sourceRect.width / 2 - (targetRect.left + targetRect.width / 2);
+  const translateY = sourceRect.top + sourceRect.height / 2 - (targetRect.top + targetRect.height / 2);
+
+  // Veendume et animate klass on peal
+  lightboxImg.classList.add('animate');
+
+  requestAnimationFrame(() => {
+    lightboxImg.style.transform =
+      `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+  });
+
+  // Pärast animatsiooni
+  setTimeout(() => {
+    lightbox.classList.remove('open', 'closing');
+    lightboxImg.classList.remove('animate');
+    lightboxImg.style.transform = 'translate(-50%, -50%)';
+    lightboxImg.src = '';
+    sourceElement = null;
+  }, 350);
+}
+
+function switchLightboxImage(newIndex) {
+  lightboxIndex = newIndex;
+  const url = currentGalleryUrls[newIndex];
+
+  // Lihtne lihtne - vahetame pildi ära, jääb keskele
+  lightboxImg.classList.remove('animate');
+  lightboxImg.src = url;
+
+  // Uuenda sourceElement
+  const gallery = document.getElementById('detail-gallery');
+  const items = gallery.querySelectorAll('.detail-gallery-item');
+  if (items[newIndex]) {
+    sourceElement = items[newIndex];
+    scrollToGalleryIndex(newIndex);
+  }
+
+  updateLightboxCounter();
+  updateLightboxArrows();
+}
+
+function lightboxPrev() {
+  if (lightboxIndex > 0) switchLightboxImage(lightboxIndex - 1);
+}
+
+function lightboxNext() {
+  if (lightboxIndex < currentGalleryUrls.length - 1) switchLightboxImage(lightboxIndex + 1);
+}
+
+function updateLightboxCounter() {
+  lightboxCounter.textContent = `${lightboxIndex + 1} / ${currentGalleryUrls.length}`;
+  lightboxCounter.style.display = currentGalleryUrls.length > 1 ? 'block' : 'none';
+}
+
+function updateLightboxArrows() {
+  const prevBtn = document.getElementById('lightbox-prev');
+  const nextBtn = document.getElementById('lightbox-next');
+  prevBtn.style.display = currentGalleryUrls.length > 1 ? 'flex' : 'none';
+  nextBtn.style.display = currentGalleryUrls.length > 1 ? 'flex' : 'none';
+  prevBtn.disabled = lightboxIndex === 0;
+  nextBtn.disabled = lightboxIndex >= currentGalleryUrls.length - 1;
+}
+
+// Kuulajad
+document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+document.getElementById('lightbox-backdrop').addEventListener('click', closeLightbox);
+document.getElementById('lightbox-img').addEventListener('click', closeLightbox);
+
+document.getElementById('lightbox-prev').addEventListener('click', (e) => {
+  e.stopPropagation();
+  lightboxPrev();
+});
+document.getElementById('lightbox-next').addEventListener('click', (e) => {
+  e.stopPropagation();
+  lightboxNext();
+});
+
+// Klaviatuur
+document.addEventListener('keydown', (e) => {
+  if (!lightbox.classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') lightboxPrev();
+  if (e.key === 'ArrowRight') lightboxNext();
+});
 
 function fillDetailPanel(h) {
   // Aadress
@@ -237,28 +489,41 @@ function fillDetailPanel(h) {
 
   // Omanikud
   if (h.owners && h.owners.length > 0) {
-    const list = h.owners.map(o => {
-      const nimi = [o.eesnimi, o.isanimi, o.perenimi]
-        .filter(Boolean).join(' ') || '—';
-      const meta = [];
-      if (o.amet) meta.push(o.amet);
-      if (o.sugu) meta.push(o.sugu);
-      if (o.asutus) meta.push(o.asutus);
-      const metaHtml = meta.length
-        ? `<div class="detail-owner-meta">${meta.join(' · ')}</div>` : '';
-      return `
-        <div class="detail-owner">
-          <div class="detail-owner-name">${nimi}</div>
-          ${metaHtml}
+    const validOwners = h.owners
+      .map(o => {
+        const nimi = [o.eesnimi, o.isanimi, o.perenimi]
+          .filter(Boolean).join(' ');
+
+        // Kui nimi puudub, aga asutus on olemas → kasuta asutust
+        // Kui mõlemad puuduvad → jäta vahele
+        const displayName = nimi || o.asutus || '';
+        if (!displayName) return null;
+
+        const meta = [];
+        if (o.amet) meta.push(o.amet);
+        if (o.sugu) meta.push(o.sugu);
+        // Asutus läheb metasse ainult siis kui nimi ON (muidu asutus on juba põhinimeks)
+        if (o.asutus && nimi) meta.push(o.asutus);
+
+        const metaHtml = meta.length
+          ? `<div class="detail-owner-meta">${meta.join(' · ')}</div>` : '';
+        return `
+          <div class="detail-owner">
+            <div class="detail-owner-name">${displayName}</div>
+            ${metaHtml}
+          </div>
+        `;
+      })
+      .filter(Boolean);
+
+    if (validOwners.length > 0) {
+      parts.push(`
+        <div class="detail-field">
+          <div class="detail-field-label">Omanikud</div>
+          <div class="detail-owners-list">${validOwners.join('')}</div>
         </div>
-      `;
-    }).join('');
-    parts.push(`
-      <div class="detail-field">
-        <div class="detail-field-label">Omanikud</div>
-        <div class="detail-owners-list">${list}</div>
-      </div>
-    `);
+      `);
+    }
   }
 
   // Fondi nimi
@@ -271,23 +536,89 @@ function fillDetailPanel(h) {
     `);
   }
 
-  // Korruste arv (kui uus või vana puudu, jäta tühjaks)
+  // Korruste arv - näita ainult neid veerge kus väärtus olemas
   const kvanas = h.korruseid_vanas ? parseFloat(h.korruseid_vanas) : null;
   const kuues = h.korruseid_uues ? parseFloat(h.korruseid_uues) : null;
   if (kvanas !== null || kuues !== null) {
+    const korrusedItems = [];
+    if (kvanas !== null) {
+      korrusedItems.push(`
+        <div class="detail-korrused-item">
+          <div class="detail-korrused-label">Vana</div>
+          <div class="detail-korrused-value">${kvanas}</div>
+        </div>
+      `);
+    }
+    if (kuues !== null) {
+      korrusedItems.push(`
+        <div class="detail-korrused-item">
+          <div class="detail-korrused-label">Uus</div>
+          <div class="detail-korrused-value">${kuues}</div>
+        </div>
+      `);
+    }
     parts.push(`
       <div class="detail-field">
         <div class="detail-field-label">Korruste arv</div>
-        <div class="detail-korrused">
-          <div class="detail-korrused-item">
-            <div class="detail-korrused-label">Vana</div>
-            <div class="detail-korrused-value">${kvanas !== null ? kvanas : ''}</div>
-          </div>
-          <div class="detail-korrused-item">
-            <div class="detail-korrused-label">Uus</div>
-            <div class="detail-korrused-value">${kuues !== null ? kuues : ''}</div>
-          </div>
+        <div class="detail-korrused">${korrusedItems.join('')}</div>
+      </div>
+    `);
+  }
+
+  // Tubade arv - näita ainult neid veerge kus väärtus olemas
+  const roomRows = [];
+  const roomLabels = [
+    ['kortereid_1', '1-toalisi'],
+    ['kortereid_2', '2-toalisi'],
+    ['kortereid_3', '3-toalisi'],
+    ['kortereid_4', '4-toalisi'],
+    ['kortereid_5', '5-toalisi'],
+    ['kortereid_6', '6-toalisi'],
+    ['kortereid_7', '7-toalisi'],
+    ['kortereid_8', '8-toalisi'],
+    ['kortereid_9', '9-toalisi'],
+    ['kortereid_10', '10-toalisi'],
+    ['kortereid_rohkem_kui_10', 'Rohkem kui 10-toalisi'],
+  ];
+
+  roomLabels.forEach(([prefix, label]) => {
+    const vanas = h[`${prefix}_vanas`];
+    const uues = h[`${prefix}_uues`];
+    const vanasNum = vanas ? parseFloat(vanas) : null;
+    const uuesNum = uues ? parseFloat(uues) : null;
+
+    if (vanasNum === null && uuesNum === null) return;
+
+    const items = [];
+    if (vanasNum !== null) {
+      items.push(`
+        <div class="detail-korrused-item">
+          <div class="detail-korrused-label">${label} (vana)</div>
+          <div class="detail-korrused-value">${vanasNum}</div>
         </div>
+      `);
+    }
+    if (uuesNum !== null) {
+      items.push(`
+        <div class="detail-korrused-item">
+          <div class="detail-korrused-label">${label} (uus)</div>
+          <div class="detail-korrused-value">${uuesNum}</div>
+        </div>
+      `);
+    }
+
+    roomRows.push(`
+      <div class="detail-korrused" style="margin-bottom: 10px;">
+        ${items.join('')}
+      </div>
+    `);
+  });
+
+  if (roomRows.length > 0) {
+    parts.push(`
+      <div class="detail-field">
+        <div class="detail-field-label">Korterite jaotus tubade arvu järgi</div>
+        ${roomRows.join('')}
       </div>
     `);
   }
