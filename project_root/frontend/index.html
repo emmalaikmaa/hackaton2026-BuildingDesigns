@@ -5,20 +5,16 @@
 <title>Tartu ajaloolised majad</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet kaardi teek -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- Marker cluster -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-<!-- noUiSlider -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
 <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
 
-<!-- Fontid -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -35,11 +31,10 @@
       <div class="subtitle">19.–20. saj</div>
     </div>
 
-    <!-- ============ FILTRID ============ -->
+    <!-- FILTRID -->
     <div class="section">
       <div class="section-title">Filtrid</div>
 
-      <!-- Vesi -->
       <div class="filter-block">
         <div class="filter-name">Vesi</div>
         <select id="filter-vesi" class="filter-select">
@@ -50,23 +45,21 @@
         </select>
       </div>
 
-      <!-- Kuivkäimla -->
       <div class="filter-block">
         <div class="filter-name">Kuivkäimla</div>
         <select id="filter-kuivkaimla" class="filter-select">
           <option value="">Kõik</option>
           <option value="sees">Sees</option>
           <option value="väljas">Väljas</option>
+          <option value="__puudub__">Puudub</option>
         </select>
       </div>
 
-      <!-- Otstarve (text input) -->
       <div class="filter-block">
         <div class="filter-name">Otstarve</div>
         <input type="text" id="filter-otstarve" class="filter-input" placeholder="Nt. elamu, kuur">
       </div>
 
-      <!-- Välisseina materjal -->
       <div class="filter-block">
         <div class="filter-name">Välisseina materjal</div>
         <select id="filter-valisseina" class="filter-select">
@@ -84,7 +77,6 @@
         </select>
       </div>
 
-      <!-- Vaheseina materjal -->
       <div class="filter-block">
         <div class="filter-name">Vaheseina materjal</div>
         <select id="filter-vaheseina" class="filter-select">
@@ -95,35 +87,32 @@
         </select>
       </div>
 
-      <!-- Tänav -->
       <div class="filter-block">
         <div class="filter-name">Tänav</div>
         <input type="text" id="filter-tanav" class="filter-input" placeholder="Nt. Riia">
       </div>
 
-      <!-- Omanik (UUS) -->
       <div class="filter-block">
         <div class="filter-name">Omanik</div>
         <input type="text" id="filter-owner" class="filter-input" placeholder="Nt. Tamm">
         <div class="filter-hint" id="owner-hint"></div>
       </div>
 
-      <!-- Linnaosa -->
       <div class="filter-block">
         <div class="filter-name">Linnaosa</div>
         <select id="filter-linnaosa" class="filter-select">
           <option value="">Kõik</option>
-          <option value="1">Linnaosa 1</option>
-          <option value="2">Linnaosa 2</option>
-          <option value="3">Linnaosa 3</option>
-          <option value="4">Linnaosa 4</option>
+          <option value="1">Supilinn + Tähtvere</option>
+          <option value="2">Kesklinn</option>
+          <option value="3">Ülejõe + Karlova</option>
+          <option value="4">Linna äärealad</option>
         </select>
       </div>
 
       <button id="reset-filters" class="reset-btn">Lähtesta filtrid</button>
     </div>
 
-    <!-- ============ STATISTIKA ============ -->
+    <!-- STATISTIKA -->
     <div class="section">
       <div class="section-title">Statistika</div>
       <div class="stats">
@@ -136,7 +125,7 @@
       </div>
     </div>
 
-    <!-- ============ LEGEND ============ -->
+    <!-- LEGEND -->
     <div class="section">
       <div class="section-title">Legend</div>
       <div class="legend">
@@ -185,11 +174,26 @@
         <code>http://localhost:8000/buildings/</code>
       </div>
     </div>
+
+    <!-- ============ DETAILPANEEL (paremalt) ============ -->
+    <aside id="detail-panel" class="detail-panel">
+      <button id="detail-close" class="detail-close" title="Sulge">×</button>
+
+      <!-- Piltide galerii -->
+      <div id="detail-gallery" class="detail-gallery"></div>
+
+      <div class="detail-body">
+        <div id="detail-address" class="detail-address"></div>
+        <div id="detail-year" class="detail-year"></div>
+
+        <div id="detail-content"></div>
+      </div>
+    </aside>
   </div>
 
   <!-- AJARIBA -->
   <div class="timeline">
-    <div class="timeline-title">Ajariba · 1870 — 1940</div>
+    <div class="timeline-title">Ajariba · 1870 — 1920</div>
     <div id="slider"></div>
   </div>
 

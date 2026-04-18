@@ -5,18 +5,16 @@
 const API_BASE = "http://localhost:8000";
 const TARTU_KESKLINN = [58.3801, 26.7225];
 
-// Globaalsed andmed
 let allHouses = [];
 const markerById = new Map();
 let currentYear = 1900;
-let ownerMatchIds = null;  // null = omaniku filtreid pole; Set<number> = sobivate ID-d
-
-// Debounce timer omaniku otsingule
+let ownerMatchIds = null;
 let ownerSearchTimer = null;
+let activeMarker = null;  // praegu avatud pin
 
 
 // ====================================================
-// KAARDI LOOMINE
+// KAART
 // ====================================================
 
 const map = L.map('map', {
@@ -40,13 +38,12 @@ map.addLayer(clusterGroup);
 
 
 // ====================================================
-// KATEGOORIAD (otstarbe järgi pin värv)
+// KATEGOORIAD
 // ====================================================
 
 function getCategory(otstarve) {
   if (!otstarve) return 'muu';
   const o = otstarve.toLowerCase();
-
   if (o.includes('elamu')) return 'elamu';
   if (o.includes('kuur')) return 'kuur';
   if (o.includes('pesuköök') || o.includes('pesukook')) return 'pesukook';
@@ -61,17 +58,13 @@ function getCategory(otstarve) {
 
 async function fetchAllHouses() {
   const response = await fetch(`${API_BASE}/buildings/`);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   return await response.json();
 }
 
 async function fetchHouseDetails(id) {
   const response = await fetch(`${API_BASE}/buildings/${id}`);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   return await response.json();
 }
 
@@ -79,16 +72,14 @@ async function searchByOwner(name) {
   const response = await fetch(
     `${API_BASE}/buildings/search/owners?name=${encodeURIComponent(name)}`
   );
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
   return new Set(data.building_ids);
 }
 
 
 // ====================================================
-// MARKERITE LOOMINE
+// MARKERID
 // ====================================================
 
 function createMarker(house) {
@@ -97,10 +88,9 @@ function createMarker(house) {
 
   const icon = L.divIcon({
     className: '',
-    html: `<div class="custom-pin ${pinClass}"></div>`,
+    html: `<div class="custom-pin ${pinClass}" data-id="${house.id}"></div>`,
     iconSize: [22, 22],
     iconAnchor: [11, 22],
-    popupAnchor: [0, -22],
   });
 
   const marker = L.marker(
@@ -109,88 +99,231 @@ function createMarker(house) {
   );
   marker.houseData = house;
 
-  marker.bindPopup('<div class="popup-loading">Laadime...</div>', {
-    maxWidth: 320,
-  });
-
-  marker.on('popupopen', async () => {
-    try {
-      const details = await fetchHouseDetails(house.id);
-      marker.setPopupContent(buildPopupContent(details));
-    } catch (error) {
-      marker.setPopupContent(
-        `<div class="popup-loading" style="color: var(--accent);">
-          Tõrge: ${error.message}
-        </div>`
-      );
-    }
-  });
+  // Klikil avame detailpaneeli (mitte popup'i)
+  marker.on('click', () => openDetailPanel(house.id, marker));
 
   return marker;
 }
 
 
 // ====================================================
-// POPUP SISU
+// DETAILPANEEL (PAREMALT)
 // ====================================================
 
-function buildPopupContent(h) {
+const panel = document.getElementById('detail-panel');
+const app = document.querySelector('.app');
+
+function markMarkerActive(marker) {
+  // Kustuta eelmine aktiivne
+  if (activeMarker) {
+    const prevEl = activeMarker.getElement();
+    if (prevEl) {
+      const pin = prevEl.querySelector('.custom-pin');
+      if (pin) pin.classList.remove('active');
+    }
+  }
+  // Märgi uus aktiivne
+  activeMarker = marker;
+  if (marker) {
+    const el = marker.getElement();
+    if (el) {
+      const pin = el.querySelector('.custom-pin');
+      if (pin) pin.classList.add('active');
+    }
+  }
+}
+
+async function openDetailPanel(id, marker) {
+  panel.classList.add('open');
+  app.classList.add('detail-open');
+  markMarkerActive(marker);
+
+  // Näita laadimist galerii asemel
+  document.getElementById('detail-gallery').innerHTML =
+    '<div class="detail-gallery-loading">Laadime detaile...</div>';
+  document.getElementById('detail-address').textContent = '';
+  document.getElementById('detail-year').textContent = '';
+  document.getElementById('detail-content').innerHTML = '';
+
+  try {
+    const h = await fetchHouseDetails(id);
+    fillDetailPanel(h);
+  } catch (error) {
+    document.getElementById('detail-content').innerHTML =
+      `<div class="detail-field"><div class="detail-field-value">Tõrge: ${error.message}</div></div>`;
+  }
+}
+
+function closeDetailPanel() {
+  panel.classList.remove('open');
+  app.classList.remove('detail-open');
+  markMarkerActive(null);
+}
+
+document.getElementById('detail-close').addEventListener('click', closeDetailPanel);
+
+
+// ====================================================
+// DETAILPANEELI SISU ÜLESEHITUS
+// ====================================================
+
+function linnaosaNimi(nr) {
+  const n = parseFloat(nr);
+  if (n === 1) return 'Supilinn + Tähtvere';
+  if (n === 2) return 'Kesklinn';
+  if (n === 3) return 'Ülejõe + Karlova';
+  if (n === 4) return 'Linna äärealad';
+  return nr ? `Linnaosa ${nr}` : '—';
+}
+
+function buildGallery(urls) {
+  const gallery = document.getElementById('detail-gallery');
+  gallery.classList.remove('empty');
+
+  if (!urls || urls.length === 0) {
+    gallery.classList.add('empty');
+    gallery.innerHTML = '<div class="detail-gallery-item"></div>';
+    return;
+  }
+
+  // Piltide listid
+  const items = urls.map(url =>
+    `<div class="detail-gallery-item" style="background-image: url('${url}');"></div>`
+  ).join('');
+
+  // Punktid kui piltide on rohkem kui 1
+  let dots = '';
+  if (urls.length > 1) {
+    dots = '<div class="detail-gallery-dots">' +
+      urls.map(() => '<span class="detail-gallery-dot"></span>').join('') +
+      '</div>';
+  }
+
+  gallery.innerHTML = items + dots;
+}
+
+function fillDetailPanel(h) {
+  // Aadress
   const aadress = [h.tanav_uus || h.tanav, h.maja_nr_uus]
-    .filter(Boolean)
-    .join(' ') || 'Tundmatu aadress';
+    .filter(Boolean).join(' ') || 'Tundmatu aadress';
+  document.getElementById('detail-address').textContent = aadress;
 
-  const aasta = h.projekti_kuupaev
-    ? h.projekti_kuupaev.substring(0, 4)
-    : '?';
+  // Aasta + linnaosa
+  const aasta = h.projekti_kuupaev ? h.projekti_kuupaev.substring(0, 4) : '—';
+  document.getElementById('detail-year').textContent =
+    `${aasta} · ${linnaosaNimi(h.linnaosa)}`;
 
-  const tagid = [];
-  if (h.vesi) tagid.push(`<span class="tag">vesi: ${h.vesi}</span>`);
-  if (h.kuivkaimla) tagid.push(`<span class="tag">käimla: ${h.kuivkaimla}</span>`);
-  if (h.otstarve) tagid.push(`<span class="tag">${h.otstarve}</span>`);
-  if (h.valisseina_materjal) tagid.push(`<span class="tag">väliss.: ${h.valisseina_materjal}</span>`);
-  if (h.vaheseina_materjal) tagid.push(`<span class="tag">vahes.: ${h.vaheseina_materjal}</span>`);
+  // Galerii
+  buildGallery(h.schematic_urls);
 
-  let pildiHtml = '';
-  if (h.schematic_urls && h.schematic_urls.length > 0) {
-    pildiHtml = `<div class="popup-image" style="background-image: url('${h.schematic_urls[0]}');"></div>`;
-  } else {
-    pildiHtml = `<div class="popup-image" style="background: linear-gradient(135deg, #8b7355, #c4a57a);"></div>`;
-  }
+  // Põhiväljad
+  const content = document.getElementById('detail-content');
+  const parts = [];
 
-  let korrusedHtml = '';
-  const kvanas = h.korruseid_vanas ? parseFloat(h.korruseid_vanas) : null;
-  const kuues = h.korruseid_uues ? parseFloat(h.korruseid_uues) : null;
-  if (kvanas !== null || kuues !== null) {
-    korrusedHtml = `<div class="popup-info">Korruseid: ${kvanas ?? '?'} → ${kuues ?? '?'}</div>`;
-  }
-
-  let omanikudHtml = '';
+  // Omanikud
   if (h.owners && h.owners.length > 0) {
     const list = h.owners.map(o => {
       const nimi = [o.eesnimi, o.isanimi, o.perenimi]
-        .filter(Boolean)
-        .join(' ');
-      const amet = o.amet ? ` (${o.amet})` : '';
-      return `<div>${nimi || '?'}${amet}</div>`;
+        .filter(Boolean).join(' ') || '—';
+      const meta = [];
+      if (o.amet) meta.push(o.amet);
+      if (o.sugu) meta.push(o.sugu);
+      if (o.asutus) meta.push(o.asutus);
+      const metaHtml = meta.length
+        ? `<div class="detail-owner-meta">${meta.join(' · ')}</div>` : '';
+      return `
+        <div class="detail-owner">
+          <div class="detail-owner-name">${nimi}</div>
+          ${metaHtml}
+        </div>
+      `;
     }).join('');
-    omanikudHtml = `
-      <div class="popup-section">
-        <div class="popup-section-title">Omanikud</div>
-        <div class="popup-info">${list}</div>
+    parts.push(`
+      <div class="detail-field">
+        <div class="detail-field-label">Omanikud</div>
+        <div class="detail-owners-list">${list}</div>
       </div>
-    `;
+    `);
   }
 
-  return `
-    ${pildiHtml}
-    <div class="popup-body">
-      <div class="popup-address">${aadress}</div>
-      <div class="popup-year">projekt ${aasta} · linnaosa ${h.linnaosa || '?'}</div>
-      ${korrusedHtml}
-      <div class="popup-tags">${tagid.join('')}</div>
-      ${omanikudHtml}
+  // Fondi nimi
+  if (h.fondi_nimi) {
+    parts.push(`
+      <div class="detail-field">
+        <div class="detail-field-label">Fond</div>
+        <div class="detail-field-value">${h.fondi_nimi}</div>
+      </div>
+    `);
+  }
+
+  // Korruste arv (kui uus või vana puudu, jäta tühjaks)
+  const kvanas = h.korruseid_vanas ? parseFloat(h.korruseid_vanas) : null;
+  const kuues = h.korruseid_uues ? parseFloat(h.korruseid_uues) : null;
+  if (kvanas !== null || kuues !== null) {
+    parts.push(`
+      <div class="detail-field">
+        <div class="detail-field-label">Korruste arv</div>
+        <div class="detail-korrused">
+          <div class="detail-korrused-item">
+            <div class="detail-korrused-label">Vana</div>
+            <div class="detail-korrused-value">${kvanas !== null ? kvanas : ''}</div>
+          </div>
+          <div class="detail-korrused-item">
+            <div class="detail-korrused-label">Uus</div>
+            <div class="detail-korrused-value">${kuues !== null ? kuues : ''}</div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  // Kuivkäimla
+  parts.push(`
+    <div class="detail-field">
+      <div class="detail-field-label">Kuivkäimla</div>
+      <div class="detail-field-value">${h.kuivkaimla || '<em>puudub</em>'}</div>
     </div>
-  `;
+  `);
+
+  // Vesi
+  parts.push(`
+    <div class="detail-field">
+      <div class="detail-field-label">Vesi</div>
+      <div class="detail-field-value">${h.vesi || '<em>puudub</em>'}</div>
+    </div>
+  `);
+
+  // Otstarve
+  if (h.otstarve) {
+    parts.push(`
+      <div class="detail-field">
+        <div class="detail-field-label">Otstarve</div>
+        <div class="detail-field-value">${h.otstarve}</div>
+      </div>
+    `);
+  }
+
+  // Välisseina materjal
+  if (h.valisseina_materjal) {
+    parts.push(`
+      <div class="detail-field">
+        <div class="detail-field-label">Välisseina materjal</div>
+        <div class="detail-field-value">${h.valisseina_materjal}</div>
+      </div>
+    `);
+  }
+
+  // Vaheseina materjal
+  if (h.vaheseina_materjal) {
+    parts.push(`
+      <div class="detail-field">
+        <div class="detail-field-label">Vaheseina materjal</div>
+        <div class="detail-field-value">${h.vaheseina_materjal}</div>
+      </div>
+    `);
+  }
+
+  content.innerHTML = parts.join('');
 }
 
 
@@ -211,41 +344,29 @@ function getFilters() {
 }
 
 function houseMatchesFilters(h, f, year) {
-  // 1. Aasta filter
   if (h.projekti_kuupaev) {
     const houseYear = parseInt(h.projekti_kuupaev.substring(0, 4));
     if (houseYear > year) return false;
   }
 
-  // 2. Omanik (backend päringuga tulemus)
   if (ownerMatchIds !== null && !ownerMatchIds.has(h.id)) return false;
-
-  // 3. Vesi
   if (f.vesi && h.vesi !== f.vesi) return false;
 
-  // 4. Kuivkäimla
-  if (f.kuivkaimla && h.kuivkaimla !== f.kuivkaimla) return false;
-
-  // 5. Otstarve (osaline vaste)
-  if (f.otstarve) {
-    if (!h.otstarve || !h.otstarve.toLowerCase().includes(f.otstarve)) return false;
+  // Kuivkäimla - spetsiaalne "puudub" variant
+  if (f.kuivkaimla) {
+    if (f.kuivkaimla === '__puudub__') {
+      // Andmebaasis on see null
+      if (h.kuivkaimla) return false;
+    } else {
+      if (h.kuivkaimla !== f.kuivkaimla) return false;
+    }
   }
 
-  // 6. Välisseina materjal
+  if (f.otstarve && (!h.otstarve || !h.otstarve.toLowerCase().includes(f.otstarve))) return false;
   if (f.valisseina && h.valisseina_materjal !== f.valisseina) return false;
-
-  // 7. Vaheseina materjal
   if (f.vaheseina && h.vaheseina_materjal !== f.vaheseina) return false;
-
-  // 8. Tänav (osaline vaste)
-  if (f.tanav) {
-    if (!h.tanav_uus || !h.tanav_uus.toLowerCase().includes(f.tanav)) return false;
-  }
-
-  // 9. Linnaosa
-  if (f.linnaosa) {
-    if (parseFloat(h.linnaosa) !== parseFloat(f.linnaosa)) return false;
-  }
+  if (f.tanav && (!h.tanav_uus || !h.tanav_uus.toLowerCase().includes(f.tanav))) return false;
+  if (f.linnaosa && parseFloat(h.linnaosa) !== parseFloat(f.linnaosa)) return false;
 
   return true;
 }
@@ -275,7 +396,7 @@ function updateVisibleMarkers() {
 
 
 // ====================================================
-// OMANIKU OTSING (debounced)
+// OMANIKU OTSING
 // ====================================================
 
 function handleOwnerSearch() {
@@ -283,10 +404,8 @@ function handleOwnerSearch() {
   const hint = document.getElementById('owner-hint');
   const name = input.value.trim();
 
-  // Tühista eelmine pärimise ootamine
   if (ownerSearchTimer) clearTimeout(ownerSearchTimer);
 
-  // Kui tühi, võta filter maha
   if (!name) {
     ownerMatchIds = null;
     hint.textContent = '';
@@ -294,7 +413,6 @@ function handleOwnerSearch() {
     return;
   }
 
-  // Liiga lühike - ära ülekoorma backendi
   if (name.length < 2) {
     hint.textContent = 'Tipi vähemalt 2 tähte...';
     return;
@@ -302,7 +420,6 @@ function handleOwnerSearch() {
 
   hint.textContent = 'Otsin...';
 
-  // Oota 400ms enne päringut (kui kasutaja lõpetab tippimise)
   ownerSearchTimer = setTimeout(async () => {
     try {
       ownerMatchIds = await searchByOwner(name);
@@ -317,14 +434,14 @@ function handleOwnerSearch() {
 
 
 // ====================================================
-// AJARIBA
+// AJARIBA — 1870 kuni 1920!
 // ====================================================
 
 const slider = document.getElementById('slider');
 noUiSlider.create(slider, {
   start: [1900],
   connect: [true, false],
-  range: { min: 1870, max: 1940 },
+  range: { min: 1870, max: 1920 },
   step: 1,
   tooltips: true,
   format: {
@@ -333,7 +450,7 @@ noUiSlider.create(slider, {
   },
   pips: {
     mode: 'values',
-    values: [1870, 1880, 1890, 1900, 1910, 1920, 1930, 1940],
+    values: [1870, 1880, 1890, 1900, 1910, 1920],
     density: 5,
   },
 });
@@ -349,13 +466,8 @@ slider.noUiSlider.on('update', (values) => {
 // ====================================================
 
 const filterIds = [
-  'filter-vesi',
-  'filter-kuivkaimla',
-  'filter-otstarve',
-  'filter-valisseina',
-  'filter-vaheseina',
-  'filter-tanav',
-  'filter-linnaosa',
+  'filter-vesi', 'filter-kuivkaimla', 'filter-otstarve',
+  'filter-valisseina', 'filter-vaheseina', 'filter-tanav', 'filter-linnaosa',
 ];
 
 filterIds.forEach(id => {
@@ -364,13 +476,10 @@ filterIds.forEach(id => {
   el.addEventListener(eventType, updateVisibleMarkers);
 });
 
-// Omanik kuulatakse eraldi (tal on debouncing)
 document.getElementById('filter-owner').addEventListener('input', handleOwnerSearch);
 
 document.getElementById('reset-filters').addEventListener('click', () => {
-  filterIds.forEach(id => {
-    document.getElementById(id).value = '';
-  });
+  filterIds.forEach(id => document.getElementById(id).value = '');
   document.getElementById('filter-owner').value = '';
   document.getElementById('owner-hint').textContent = '';
   ownerMatchIds = null;
