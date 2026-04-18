@@ -2,143 +2,133 @@
 <html lang="et">
 <head>
 <meta charset="UTF-8">
-<title>Tartu ajaloolised majad · 1870–1940</title>
+<title>Tartu ajaloolised majad</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
- 
+
 <!-- Leaflet kaardi teek -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
- 
-<!-- noUiSlider ajariba jaoks -->
+
+<!-- Marker cluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<!-- noUiSlider -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.css">
 <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.1/dist/nouislider.min.js"></script>
- 
+
 <!-- Fontid -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
- 
-<!-- Meie enda stiilifail -->
+
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
- 
+
 <div class="app">
- 
-  <!-- KÜLGPANEEL -->
+
   <aside class="sidebar">
     <div class="brand">
       <h1>Tartu majad</h1>
-      <div class="subtitle">1870 — 1940</div>
+      <div class="subtitle">19.–20. saj</div>
     </div>
- 
+
     <!-- ============ FILTRID ============ -->
     <div class="section">
       <div class="section-title">Filtrid</div>
- 
-      <!-- Veevarustus -->
+
+      <!-- Vesi -->
       <div class="filter-block">
-        <label class="filter-label">
-          <input type="checkbox" id="filter-water">
-          <span>Ainult veevarustusega</span>
-        </label>
+        <div class="filter-name">Vesi</div>
+        <select id="filter-vesi" class="filter-select">
+          <option value="">Kõik</option>
+          <option value="on">On</option>
+          <option value="puudub">Puudub</option>
+          <option value="oma pumbajaam">Oma pumbajaam</option>
+        </select>
       </div>
- 
+
       <!-- Kuivkäimla -->
       <div class="filter-block">
         <div class="filter-name">Kuivkäimla</div>
-        <select id="filter-outhouse" class="filter-select">
+        <select id="filter-kuivkaimla" class="filter-select">
           <option value="">Kõik</option>
           <option value="sees">Sees</option>
           <option value="väljas">Väljas</option>
-          <option value="puudub">Puudub</option>
         </select>
       </div>
- 
-      <!-- Otstarve -->
+
+      <!-- Otstarve (tekstivaliga, sest variante on 328) -->
       <div class="filter-block">
         <div class="filter-name">Otstarve</div>
-        <select id="filter-purpose" class="filter-select">
+        <input type="text" id="filter-otstarve" class="filter-input" placeholder="Nt. elamu, kuur">
+      </div>
+
+      <!-- Välisseina materjal -->
+      <div class="filter-block">
+        <div class="filter-name">Välisseina materjal</div>
+        <select id="filter-valisseina" class="filter-select">
           <option value="">Kõik</option>
-          <option value="korter">Korter</option>
-          <option value="elumaja">Elumaja</option>
-          <option value="kuur">Kuur</option>
+          <option value="puit">Puit</option>
+          <option value="kivi-kivi">Kivi</option>
+          <option value="puit-kivi">Puit-kivi</option>
+          <option value="kivi-puitpost">Kivi-puitpost</option>
+          <option value="kivipost-puit">Kivipost-puit</option>
+          <option value="betoon-puit">Betoon-puit</option>
+          <option value="postid-puit">Postid-puit</option>
+          <option value="puit-klaas">Puit-klaas</option>
+          <option value="klaas">Klaas</option>
+          <option value="puitpostid">Puitpostid</option>
         </select>
       </div>
- 
-      <!-- Siseseina materjal -->
+
+      <!-- Vaheseina materjal -->
       <div class="filter-block">
-        <div class="filter-name">Siseseina materjal</div>
-        <select id="filter-material" class="filter-select">
+        <div class="filter-name">Vaheseina materjal</div>
+        <select id="filter-vaheseina" class="filter-select">
           <option value="">Kõik</option>
           <option value="puit">Puit</option>
           <option value="kivi">Kivi</option>
+          <option value="kivi-puit">Kivi-puit</option>
         </select>
       </div>
- 
-      <!-- Tubade arv -->
-      <div class="filter-block">
-        <div class="filter-name">Tubade arv</div>
-        <select id="filter-rooms" class="filter-select">
-          <option value="">Kõik</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-        </select>
-      </div>
- 
-      <!-- Omanik (text input) -->
-      <div class="filter-block">
-        <div class="filter-name">Omanik</div>
-        <input type="text" id="filter-owner" class="filter-input" placeholder="Nt. Tamm">
-      </div>
- 
-      <!-- Tänav (text input) -->
+
+      <!-- Tänav -->
       <div class="filter-block">
         <div class="filter-name">Tänav</div>
-        <input type="text" id="filter-street" class="filter-input" placeholder="Nt. Rüütli">
+        <input type="text" id="filter-tanav" class="filter-input" placeholder="Nt. Riia">
       </div>
- 
-      <!-- Linnaosa -->
+
+      <!-- Linnaosa (numbrid 1-4) -->
       <div class="filter-block">
         <div class="filter-name">Linnaosa</div>
-        <select id="filter-district" class="filter-select">
+        <select id="filter-linnaosa" class="filter-select">
           <option value="">Kõik</option>
-          <option value="Kesklinn">Kesklinn</option>
-          <option value="Karlova">Karlova</option>
-          <option value="Supilinn">Supilinn</option>
-          <option value="Tähtvere">Tähtvere</option>
-          <option value="Tammelinn">Tammelinn</option>
-          <option value="Annelinn">Annelinn</option>
-          <option value="Ülejõe">Ülejõe</option>
-          <option value="Ihaste">Ihaste</option>
-          <option value="Veeriku">Veeriku</option>
-          <option value="Ränilinn">Ränilinn</option>
-          <option value="Raadi">Raadi</option>
-          <option value="Variku">Variku</option>
+          <option value="1">Linnaosa 1</option>
+          <option value="2">Linnaosa 2</option>
+          <option value="3">Linnaosa 3</option>
+          <option value="4">Linnaosa 4</option>
         </select>
       </div>
- 
-      <!-- Lähtesta nupp -->
+
       <button id="reset-filters" class="reset-btn">Lähtesta filtrid</button>
     </div>
- 
+
     <!-- ============ STATISTIKA ============ -->
     <div class="section">
       <div class="section-title">Statistika</div>
       <div class="stats">
         <span class="count" id="visible-count">0</span>
-        <span class="label">nähtavat maja</span>
+        <span class="label">nähtavat hoonet</span>
+      </div>
+      <div class="stats stats-small">
+        <span class="count" id="total-count">0</span>
+        <span class="label">kokku andmebaasis</span>
       </div>
     </div>
- 
+
     <!-- ============ LEGEND ============ -->
     <div class="section">
       <div class="section-title">Legend</div>
@@ -154,7 +144,7 @@
       </div>
     </div>
   </aside>
- 
+
   <!-- KAART -->
   <div class="map-container">
     <div id="map"></div>
@@ -162,19 +152,30 @@
       <div class="year" id="year-display">1900</div>
       <div class="label">aasta</div>
     </div>
+
+    <!-- Laadimise indikaator -->
+    <div id="loading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Laadime hooneid backendist...</div>
+    </div>
+
+    <!-- Veateade -->
+    <div id="error-msg" class="error-overlay" style="display: none;">
+      <div class="error-title">Tõrge</div>
+      <div class="error-text" id="error-text"></div>
+      <div class="error-hint">Kontrolli, et backend töötab: <code>http://localhost:8000</code></div>
+    </div>
   </div>
- 
+
   <!-- AJARIBA -->
   <div class="timeline">
     <div class="timeline-title">Ajariba · 1870 — 1940</div>
     <div id="slider"></div>
   </div>
- 
+
 </div>
- 
-<!-- Meie enda skriptid: ANDMED esimesena, siis LOOGIKA -->
-<script src="data.js"></script>
+
 <script src="script.js"></script>
- 
+
 </body>
 </html>

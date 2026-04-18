@@ -1,7 +1,7 @@
 /* ====================================================
    TARTU AJALOOMAJAD · STIILID
    ==================================================== */
- 
+
 :root {
   --bg: #f4efe6;
   --ink: #1a1612;
@@ -13,9 +13,9 @@
   --pin-standard: #8b2e1f;
   --pin-water: #2e5d8b;
 }
- 
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
 html, body {
   height: 100%;
   font-family: 'Fraunces', Georgia, serif;
@@ -23,14 +23,14 @@ html, body {
   color: var(--ink);
   overflow: hidden;
 }
- 
+
 .app {
   display: grid;
   grid-template-columns: 320px 1fr;
   grid-template-rows: 1fr auto;
   height: 100vh;
 }
- 
+
 /* ---- KÜLGPANEEL ---- */
 .sidebar {
   grid-row: 1 / 3;
@@ -40,7 +40,7 @@ html, body {
   overflow-y: auto;
   position: relative;
 }
- 
+
 .sidebar::before {
   content: "";
   position: absolute;
@@ -48,13 +48,13 @@ html, body {
   height: 4px;
   background: linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%);
 }
- 
+
 .brand {
   margin-bottom: 28px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--line);
 }
- 
+
 .brand h1 {
   font-weight: 600;
   font-size: 26px;
@@ -62,7 +62,7 @@ html, body {
   letter-spacing: -0.02em;
   font-style: italic;
 }
- 
+
 .brand .subtitle {
   margin-top: 6px;
   font-family: 'JetBrains Mono', monospace;
@@ -71,11 +71,11 @@ html, body {
   text-transform: uppercase;
   color: var(--ink-soft);
 }
- 
+
 .section {
   margin-bottom: 28px;
 }
- 
+
 .section-title {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
@@ -87,19 +87,19 @@ html, body {
   align-items: center;
   gap: 10px;
 }
- 
+
 .section-title::after {
   content: "";
   flex: 1;
   height: 1px;
   background: var(--line);
 }
- 
-/* ---- ÜKSIKUD FILTRID ---- */
+
+/* ---- FILTRID ---- */
 .filter-block {
   margin-bottom: 14px;
 }
- 
+
 .filter-name {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -108,50 +108,7 @@ html, body {
   color: var(--ink-soft);
   margin-bottom: 6px;
 }
- 
-/* Checkbox label */
-.filter-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 0;
-  cursor: pointer;
-  font-size: 14px;
-  transition: color 0.2s;
-}
- 
-.filter-label:hover {
-  color: var(--accent);
-}
- 
-.filter-label input[type="checkbox"] {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 1.5px solid var(--ink-soft);
-  border-radius: 2px;
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;
-  background: var(--paper);
-}
- 
-.filter-label input[type="checkbox"]:checked {
-  background: var(--accent);
-  border-color: var(--accent);
-}
- 
-.filter-label input[type="checkbox"]:checked::after {
-  content: "✓";
-  position: absolute;
-  color: var(--paper);
-  font-size: 12px;
-  font-weight: bold;
-  top: -2px;
-  left: 2px;
-}
- 
-/* Dropdown (select) */
+
 .filter-select {
   width: 100%;
   padding: 7px 10px;
@@ -169,14 +126,13 @@ html, body {
   background-position: right 10px center;
   padding-right: 28px;
 }
- 
+
 .filter-select:hover,
 .filter-select:focus {
   outline: none;
   border-color: var(--accent);
 }
- 
-/* Text input */
+
 .filter-input {
   width: 100%;
   padding: 7px 10px;
@@ -188,19 +144,18 @@ html, body {
   color: var(--ink);
   transition: border-color 0.2s;
 }
- 
+
 .filter-input:hover,
 .filter-input:focus {
   outline: none;
   border-color: var(--accent);
 }
- 
+
 .filter-input::placeholder {
   color: #b0a594;
   font-style: italic;
 }
- 
-/* Lähtesta nupp */
+
 .reset-btn {
   width: 100%;
   margin-top: 10px;
@@ -215,12 +170,12 @@ html, body {
   cursor: pointer;
   transition: all 0.2s;
 }
- 
+
 .reset-btn:hover {
   background: var(--accent);
   color: var(--paper);
 }
- 
+
 /* ---- STATISTIKA ---- */
 .stats {
   font-family: 'JetBrains Mono', monospace;
@@ -229,7 +184,7 @@ html, body {
   padding: 14px 16px;
   border-left: 3px solid var(--accent);
 }
- 
+
 .stats .count {
   font-size: 28px;
   font-weight: 500;
@@ -238,28 +193,38 @@ html, body {
   line-height: 1;
   margin-bottom: 4px;
 }
- 
+
 .stats .label {
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
- 
+
+.stats-small {
+  margin-top: 8px;
+  border-left-color: var(--ink-soft);
+}
+
+.stats-small .count {
+  color: var(--ink-soft);
+  font-size: 18px;
+}
+
 /* ---- LEGEND ---- */
 .legend {
   font-size: 13px;
   line-height: 1.6;
   color: var(--ink-soft);
 }
- 
+
 .legend-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 4px 0;
 }
- 
+
 .legend-pin {
   display: inline-block;
   width: 14px;
@@ -269,19 +234,19 @@ html, body {
   border: 2px solid var(--paper);
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
- 
+
 /* ---- KAART ---- */
 .map-container {
   position: relative;
   overflow: hidden;
 }
- 
+
 #map {
   width: 100%;
   height: 100%;
   background: var(--bg);
 }
- 
+
 .year-badge {
   position: absolute;
   top: 20px;
@@ -294,14 +259,14 @@ html, body {
   font-family: 'Fraunces', serif;
   font-style: italic;
 }
- 
+
 .year-badge .year {
   font-size: 32px;
   font-weight: 600;
   color: var(--accent);
   line-height: 1;
 }
- 
+
 .year-badge .label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -311,7 +276,85 @@ html, body {
   margin-top: 4px;
   font-style: normal;
 }
- 
+
+/* ---- LAADIMINE JA VEAD ---- */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(244, 239, 230, 0.95);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.error-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  background: var(--paper);
+  border: 2px solid var(--accent);
+  padding: 24px 32px;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(26,22,18,0.2);
+}
+
+.error-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.error-text {
+  font-size: 14px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  word-break: break-word;
+}
+
+.error-hint {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.error-hint code {
+  background: var(--bg);
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
 /* ---- AJARIBA ---- */
 .timeline {
   grid-column: 2;
@@ -322,7 +365,7 @@ html, body {
   align-items: center;
   gap: 24px;
 }
- 
+
 .timeline-title {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -332,24 +375,23 @@ html, body {
   white-space: nowrap;
   flex-shrink: 0;
 }
- 
+
 #slider {
   flex: 1;
   margin: 0 4px;
 }
- 
-/* noUiSlider stiilid */
+
 .noUi-target {
   background: var(--line);
   border: none;
   box-shadow: none;
   height: 6px;
 }
- 
+
 .noUi-connect {
   background: linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%);
 }
- 
+
 .noUi-handle {
   background: var(--paper);
   border: 2px solid var(--accent);
@@ -361,14 +403,14 @@ html, body {
   top: -9px !important;
   cursor: grab;
 }
- 
+
 .noUi-handle:active { cursor: grabbing; }
- 
+
 .noUi-handle::before,
 .noUi-handle::after {
   display: none;
 }
- 
+
 .noUi-tooltip {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
@@ -377,25 +419,25 @@ html, body {
   border: none;
   padding: 4px 8px;
 }
- 
+
 .noUi-pips-horizontal {
   padding: 6px 0;
   height: 24px;
 }
- 
+
 .noUi-value {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
   color: var(--ink-soft);
   margin-top: 2px;
 }
- 
+
 .noUi-marker-large,
 .noUi-marker {
   background: var(--line);
   height: 4px;
 }
- 
+
 /* ---- POPUP ---- */
 .leaflet-popup-content-wrapper {
   background: var(--paper);
@@ -403,17 +445,19 @@ html, body {
   padding: 0;
   box-shadow: 0 8px 32px rgba(26,22,18,0.2);
 }
- 
+
 .leaflet-popup-content {
   margin: 0;
-  width: 280px !important;
+  width: 320px !important;
   font-family: 'Fraunces', serif;
+  max-height: 500px;
+  overflow-y: auto;
 }
- 
+
 .leaflet-popup-tip {
   background: var(--paper);
 }
- 
+
 .popup-image {
   width: 100%;
   height: 160px;
@@ -422,18 +466,20 @@ html, body {
   background-position: center;
   position: relative;
 }
- 
-.popup-image::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.4), transparent 50%);
+
+.popup-loading {
+  padding: 30px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
 }
- 
+
 .popup-body {
   padding: 16px 20px 20px;
 }
- 
+
 .popup-address {
   font-size: 18px;
   font-weight: 600;
@@ -441,7 +487,7 @@ html, body {
   line-height: 1.2;
   margin-bottom: 4px;
 }
- 
+
 .popup-year {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
@@ -449,20 +495,35 @@ html, body {
   color: var(--accent);
   margin-bottom: 12px;
 }
- 
+
 .popup-info {
   font-size: 14px;
   line-height: 1.5;
   color: var(--ink-soft);
   margin-bottom: 12px;
 }
- 
+
+.popup-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.popup-section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
 .popup-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
- 
+
 .tag {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
@@ -473,29 +534,37 @@ html, body {
   border: 1px solid var(--line);
   color: var(--ink-soft);
 }
- 
+
 .tag.has-water {
   background: #e8f0f7;
   border-color: var(--pin-water);
   color: var(--pin-water);
 }
- 
-/* ---- KOHANDATUD MARKER KAARDIL ---- */
+
+/* ---- MARKER KAARDIL ---- */
 .custom-pin {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  border: 3px solid var(--paper);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-  animation: pin-drop 0.4s ease-out;
+  border: 2.5px solid var(--paper);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
- 
-@keyframes pin-drop {
-  from { transform: rotate(-45deg) translateY(-20px); opacity: 0; }
-  to { transform: rotate(-45deg) translateY(0); opacity: 1; }
-}
- 
+
 .pin-standard { background: var(--pin-standard); }
 .pin-water { background: var(--pin-water); }
- 
+
+/* ---- CLUSTER STIILID ---- */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background-color: rgba(139, 46, 31, 0.3);
+}
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: rgba(139, 46, 31, 0.8);
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
