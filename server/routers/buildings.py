@@ -8,10 +8,8 @@ router = APIRouter(prefix="/buildings", tags=["buildings"])
 
 @router.get("/", response_model=list[BuildingPin])
 def get_buildings(
-    year_before: int = None,
-    year_after: int = None,
-    min_floors: int = None,
-    max_floors: int = None,
+    year_before: int,
+    year_after: int,
     db: Session = Depends(get_db)
 ):
     q = db.query(Building).filter(
@@ -20,18 +18,19 @@ def get_buildings(
     )
     if year_before: q = q.filter(Building.projekti_kuupaev < f"{year_before}-01-01")
     if year_after:  q = q.filter(Building.projekti_kuupaev > f"{year_after}-12-31")
-    #if min_floors:  q = q.filter(Building.korruseid_uues >= min_floors) VAJA MUUTA
-    #if max_floors:  q = q.filter(Building.korruseid_uues <= max_floors) VAJA MUUTA
 
     return q.with_entities(Building.id, Building.lat, Building.lng).all()
 
 @router.get("/{building_id}", response_model=BuildingDetail)
-def get_building(building_id: int, db: Session = Depends(get_db)):
+def get_building(building_id: int, request: Request, db: Session = Depends(get_db)):
     building = db.query(Building).filter(Building.id == building_id).first()
     if not building:
         raise HTTPException(status_code=404, detail="Building not found")
     result = BuildingDetail.model_validate(building)
-    if building.fail:
-        result.fail = str(Request.base_url) + f"pildid/{building_id}"
+    if building.failid:
+        result.schematic_urls = [
+            str(request.base_url) + f"pildid/{filename.strip()}"
+            for filename in building.failid.split(",")
+        ]
 
     return result
