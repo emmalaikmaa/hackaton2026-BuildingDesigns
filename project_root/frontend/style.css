@@ -10,8 +10,13 @@
   --accent: #8b2e1f;
   --accent-soft: #c4654f;
   --line: #d4c9b5;
-  --pin-standard: #8b2e1f;
-  --pin-water: #2e5d8b;
+
+  /* Pin värvid kategooriate järgi */
+  --pin-elamu: #8b4513;      /* pruun - elamu */
+  --pin-kuur: #d4a64a;       /* kollane - kuur */
+  --pin-pesukook: #4a7a9c;   /* sinine - pesuköök */
+  --pin-tall: #5d7c3f;       /* roheline - tall */
+  --pin-muu: #7a7065;        /* hall - muu */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -107,6 +112,15 @@ html, body {
   text-transform: uppercase;
   color: var(--ink-soft);
   margin-bottom: 6px;
+}
+
+.filter-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+  font-style: italic;
+  min-height: 14px;
 }
 
 .filter-select {
@@ -535,13 +549,7 @@ html, body {
   color: var(--ink-soft);
 }
 
-.tag.has-water {
-  background: #e8f0f7;
-  border-color: var(--pin-water);
-  color: var(--pin-water);
-}
-
-/* ---- MARKER KAARDIL ---- */
+/* ---- MARKER KAARDIL - KATEGOORIATE JÄRGI ---- */
 .custom-pin {
   width: 22px;
   height: 22px;
@@ -551,8 +559,11 @@ html, body {
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
-.pin-standard { background: var(--pin-standard); }
-.pin-water { background: var(--pin-water); }
+.pin-elamu     { background: var(--pin-elamu); }
+.pin-kuur      { background: var(--pin-kuur); }
+.pin-pesukook  { background: var(--pin-pesukook); }
+.pin-tall      { background: var(--pin-tall); }
+.pin-muu       { background: var(--pin-muu); }
 
 /* ---- CLUSTER STIILID ---- */
 .marker-cluster-small,
