@@ -216,11 +216,11 @@ function buildGallery(urls) {
     nextBtn.style.display = 'none';
   }
 
-  // Klikk pildil → lightbox
+  // Klikk pildil → lightbox (anname kaasa ka klikitud element)
   gallery.querySelectorAll('.detail-gallery-item').forEach(el => {
     el.addEventListener('click', () => {
       const idx = parseInt(el.dataset.index);
-      if (!isNaN(idx)) openLightbox(idx);
+      if (!isNaN(idx)) openLightbox(idx, el);
     });
   });
 
@@ -271,43 +271,151 @@ document.getElementById('detail-gallery').addEventListener('scroll', (e) => {
 
 
 // ====================================================
-// LIGHTBOX (täisekraani pilt)
+// LIGHTBOX (FLIP tehnika - sujuv zoom animatsioon)
 // ====================================================
 
 const lightbox = document.getElementById('lightbox');
 const lightboxImg = document.getElementById('lightbox-img');
 const lightboxCounter = document.getElementById('lightbox-counter');
 let lightboxIndex = 0;
+let sourceElement = null;
 
-function openLightbox(index) {
+/**
+ * FLIP animatsioon:
+ *  - Pilt on CSS-s keskel (left:50%, top:50%, translate(-50%,-50%))
+ *  - Algsesse positsiooni paneme ta transform'iga: transform: ...scale(...) translate(...)
+ *  - Järgmises frame'is eemaldame transformi → CSS transition mängib
+ */
+function openLightbox(index, clickedElement) {
   if (!currentGalleryUrls || currentGalleryUrls.length === 0) return;
   lightboxIndex = index;
-  lightboxImg.src = currentGalleryUrls[index];
+  sourceElement = clickedElement;
+
+  const url = currentGalleryUrls[index];
+
+  // Määra pilt ja ava lightbox (pilt läheb automaatselt keskele CSS-st)
+  lightboxImg.classList.remove('animate');
+  lightboxImg.src = url;
+  lightbox.classList.add('open');
+  lightbox.classList.remove('ready');
+
+  // Oota kuni pilt laetud, siis käivita animatsioon
+  const startAnimation = () => {
+    const sourceRect = clickedElement.getBoundingClientRect();
+    const targetRect = lightboxImg.getBoundingClientRect();
+
+    if (targetRect.width === 0 || targetRect.height === 0) {
+      // Pilt pole veel suurust võtnud - proovi uuesti
+      requestAnimationFrame(startAnimation);
+      return;
+    }
+
+    // FLIP: arvuta transform mis viib pildi algsesse positsiooni
+    const scaleX = sourceRect.width / targetRect.width;
+    const scaleY = sourceRect.height / targetRect.height;
+    const translateX = sourceRect.left + sourceRect.width / 2 - (targetRect.left + targetRect.width / 2);
+    const translateY = sourceRect.top + sourceRect.height / 2 - (targetRect.top + targetRect.height / 2);
+
+    // 1. Pane pilt algsesse positsiooni (ILMA transitioniTA)
+    lightboxImg.style.transform =
+      `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+
+    // Force reflow
+    lightboxImg.offsetHeight;
+
+    // 2. Lisa transition ja eemalda transform → animatsioon käib
+    requestAnimationFrame(() => {
+      lightboxImg.classList.add('animate');
+      lightboxImg.style.transform = 'translate(-50%, -50%)';
+
+      setTimeout(() => {
+        lightbox.classList.add('ready');
+      }, 350);
+    });
+  };
+
+  if (lightboxImg.complete && lightboxImg.naturalWidth > 0) {
+    // Pilt juba cache'is - kohe algusse
+    requestAnimationFrame(startAnimation);
+  } else {
+    // Ootame laadimist
+    lightboxImg.onload = () => {
+      requestAnimationFrame(startAnimation);
+    };
+  }
+
   updateLightboxCounter();
   updateLightboxArrows();
-  lightbox.classList.add('open');
 }
 
 function closeLightbox() {
-  lightbox.classList.remove('open');
+  if (!lightbox.classList.contains('open')) return;
+
+  lightbox.classList.remove('ready');
+  lightbox.classList.add('closing');
+
+  // Kui source elementi pole, lihtsalt sulgeme
+  if (!sourceElement) {
+    lightbox.classList.remove('open', 'closing');
+    lightboxImg.classList.remove('animate');
+    lightboxImg.style.transform = 'translate(-50%, -50%)';
+    lightboxImg.src = '';
+    return;
+  }
+
+  // Arvuta transform algsesse positsiooni
+  const sourceRect = sourceElement.getBoundingClientRect();
+  const targetRect = lightboxImg.getBoundingClientRect();
+
+  const scaleX = sourceRect.width / targetRect.width;
+  const scaleY = sourceRect.height / targetRect.height;
+  const translateX = sourceRect.left + sourceRect.width / 2 - (targetRect.left + targetRect.width / 2);
+  const translateY = sourceRect.top + sourceRect.height / 2 - (targetRect.top + targetRect.height / 2);
+
+  // Veendume et animate klass on peal
+  lightboxImg.classList.add('animate');
+
+  requestAnimationFrame(() => {
+    lightboxImg.style.transform =
+      `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+  });
+
+  // Pärast animatsiooni
+  setTimeout(() => {
+    lightbox.classList.remove('open', 'closing');
+    lightboxImg.classList.remove('animate');
+    lightboxImg.style.transform = 'translate(-50%, -50%)';
+    lightboxImg.src = '';
+    sourceElement = null;
+  }, 350);
+}
+
+function switchLightboxImage(newIndex) {
+  lightboxIndex = newIndex;
+  const url = currentGalleryUrls[newIndex];
+
+  // Lihtne lihtne - vahetame pildi ära, jääb keskele
+  lightboxImg.classList.remove('animate');
+  lightboxImg.src = url;
+
+  // Uuenda sourceElement
+  const gallery = document.getElementById('detail-gallery');
+  const items = gallery.querySelectorAll('.detail-gallery-item');
+  if (items[newIndex]) {
+    sourceElement = items[newIndex];
+    scrollToGalleryIndex(newIndex);
+  }
+
+  updateLightboxCounter();
+  updateLightboxArrows();
 }
 
 function lightboxPrev() {
-  if (lightboxIndex > 0) {
-    lightboxIndex--;
-    lightboxImg.src = currentGalleryUrls[lightboxIndex];
-    updateLightboxCounter();
-    updateLightboxArrows();
-  }
+  if (lightboxIndex > 0) switchLightboxImage(lightboxIndex - 1);
 }
 
 function lightboxNext() {
-  if (lightboxIndex < currentGalleryUrls.length - 1) {
-    lightboxIndex++;
-    lightboxImg.src = currentGalleryUrls[lightboxIndex];
-    updateLightboxCounter();
-    updateLightboxArrows();
-  }
+  if (lightboxIndex < currentGalleryUrls.length - 1) switchLightboxImage(lightboxIndex + 1);
 }
 
 function updateLightboxCounter() {
@@ -324,8 +432,11 @@ function updateLightboxArrows() {
   nextBtn.disabled = lightboxIndex >= currentGalleryUrls.length - 1;
 }
 
-// Lightbox'i kuulajad
+// Kuulajad
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+document.getElementById('lightbox-backdrop').addEventListener('click', closeLightbox);
+document.getElementById('lightbox-img').addEventListener('click', closeLightbox);
+
 document.getElementById('lightbox-prev').addEventListener('click', (e) => {
   e.stopPropagation();
   lightboxPrev();
@@ -335,12 +446,7 @@ document.getElementById('lightbox-next').addEventListener('click', (e) => {
   lightboxNext();
 });
 
-// Kliki tausta peale → sulge
-lightbox.addEventListener('click', (e) => {
-  if (e.target === lightbox) closeLightbox();
-});
-
-// Klaviatuurinupud lightbox'is
+// Klaviatuur
 document.addEventListener('keydown', (e) => {
   if (!lightbox.classList.contains('open')) return;
   if (e.key === 'Escape') closeLightbox();

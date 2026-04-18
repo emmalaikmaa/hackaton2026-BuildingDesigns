@@ -593,27 +593,66 @@ html, body {
   background: var(--accent);
 }
 
-/* ---- LIGHTBOX (täisekraan pildi jaoks) ---- */
+/* ---- LIGHTBOX (täisekraan pildi jaoks, FLIP animatsioon) ---- */
 .lightbox {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.92);
   z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  cursor: zoom-out;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .lightbox.open {
-  display: flex;
+  visibility: visible;
+  pointer-events: auto;
 }
 
-.lightbox img {
+.lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.35s ease-out;
+  cursor: zoom-out;
+}
+
+.lightbox.open .lightbox-backdrop {
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.lightbox.closing .lightbox-backdrop {
+  background: rgba(0, 0, 0, 0);
+}
+
+/* Pilt - positsioneeritud absoluutselt, transform'iga animeerime */
+.lightbox-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   max-width: 95vw;
   max-height: 95vh;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
   object-fit: contain;
   box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  cursor: pointer;
+  display: block;
+  will-change: transform;
+}
+
+.lightbox-img.animate {
+  transition: transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Nupud peidetud kuni animatsioon läbi */
+.lightbox-controls {
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+  pointer-events: none;
+}
+
+.lightbox.ready .lightbox-controls {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .lightbox-close {
@@ -632,6 +671,7 @@ html, body {
   justify-content: center;
   border-radius: 50%;
   transition: background 0.2s;
+  z-index: 2;
 }
 
 .lightbox-close:hover {
@@ -655,6 +695,7 @@ html, body {
   justify-content: center;
   border-radius: 50%;
   transition: background 0.2s;
+  z-index: 2;
 }
 
 .lightbox-arrow:hover {
@@ -677,6 +718,7 @@ html, body {
   background: rgba(0, 0, 0, 0.5);
   padding: 6px 14px;
   border-radius: 20px;
+  z-index: 2;
 }
 
 .detail-body {
