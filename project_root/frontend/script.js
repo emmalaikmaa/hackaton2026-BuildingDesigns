@@ -159,6 +159,8 @@ async function openDetailPanel(id, marker) {
   document.getElementById('detail-address').textContent = '';
   document.getElementById('detail-year').textContent = '';
   document.getElementById('detail-content').innerHTML = '';
+  // Peida 3D nupp kuniks andmed laetud
+  document.getElementById('detail-3d-button').style.display = 'none';
 
   try {
     const h = await fetchHouseDetails(id);
@@ -190,6 +192,50 @@ function linnaosaNimi(nr) {
   if (n === 4) return 'Linna äärealad';
   return nr ? `Linnaosa ${nr}` : '—';
 }
+
+
+// ====================================================
+// 3D MUDELI NUPP
+// ====================================================
+
+/**
+ * Kontrollib kas hoonel on 3D mudel ja näitab vastavat nuppu.
+ * Lisa uusi hooneid models3D massiivi.
+ */
+function setup3DButton(h) {
+  const wrapper = document.getElementById('detail-3d-button');
+  const btn = document.getElementById('detail-3d-link');
+
+  // 3D mudelite register
+  const models3D = [
+    {
+      match: (building) => {
+        const tanav = (building.tanav_uus || building.tanav || '').toLowerCase();
+        const nr = String(building.maja_nr_uus || '').trim();
+        return tanav.includes('riia') && nr === '53';
+      },
+      url: 'riia-53-3d.html',
+    },
+    // Lisa rohkem siia, kui teed neile 3D mudelid:
+    // { match: (b) => b.tanav_uus === 'Vanemuise' && b.maja_nr_uus === '10', url: 'vanemuise-10-3d.html' },
+  ];
+
+  const model = models3D.find(m => m.match(h));
+
+  if (model) {
+    wrapper.style.display = 'block';
+    // Eemaldame vanad kuulajad (kloonides nupp) ja paneme uue
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    newBtn.addEventListener('click', () => {
+      // window.open() lubab window.close() hiljem töötada
+      window.open(model.url, '_blank');
+    });
+  } else {
+    wrapper.style.display = 'none';
+  }
+}
+
 
 // ====================================================
 // GALERII (pildid) + LIGHTBOX
@@ -297,12 +343,6 @@ const lightboxCounter = document.getElementById('lightbox-counter');
 let lightboxIndex = 0;
 let sourceElement = null;
 
-/**
- * FLIP animatsioon:
- *  - Pilt on CSS-s keskel (left:50%, top:50%, translate(-50%,-50%))
- *  - Algsesse positsiooni paneme ta transform'iga: transform: ...scale(...) translate(...)
- *  - Järgmises frame'is eemaldame transformi → CSS transition mängib
- */
 function openLightbox(index, clickedElement) {
   if (!currentGalleryUrls || currentGalleryUrls.length === 0) return;
   lightboxIndex = index;
@@ -310,37 +350,30 @@ function openLightbox(index, clickedElement) {
 
   const url = currentGalleryUrls[index];
 
-  // Määra pilt ja ava lightbox (pilt läheb automaatselt keskele CSS-st)
   lightboxImg.classList.remove('animate');
   lightboxImg.src = url;
   lightbox.classList.add('open');
   lightbox.classList.remove('ready');
 
-  // Oota kuni pilt laetud, siis käivita animatsioon
   const startAnimation = () => {
     const sourceRect = clickedElement.getBoundingClientRect();
     const targetRect = lightboxImg.getBoundingClientRect();
 
     if (targetRect.width === 0 || targetRect.height === 0) {
-      // Pilt pole veel suurust võtnud - proovi uuesti
       requestAnimationFrame(startAnimation);
       return;
     }
 
-    // FLIP: arvuta transform mis viib pildi algsesse positsiooni
     const scaleX = sourceRect.width / targetRect.width;
     const scaleY = sourceRect.height / targetRect.height;
     const translateX = sourceRect.left + sourceRect.width / 2 - (targetRect.left + targetRect.width / 2);
     const translateY = sourceRect.top + sourceRect.height / 2 - (targetRect.top + targetRect.height / 2);
 
-    // 1. Pane pilt algsesse positsiooni (ILMA transitioniTA)
     lightboxImg.style.transform =
       `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
 
-    // Force reflow
     lightboxImg.offsetHeight;
 
-    // 2. Lisa transition ja eemalda transform → animatsioon käib
     requestAnimationFrame(() => {
       lightboxImg.classList.add('animate');
       lightboxImg.style.transform = 'translate(-50%, -50%)';
@@ -352,10 +385,8 @@ function openLightbox(index, clickedElement) {
   };
 
   if (lightboxImg.complete && lightboxImg.naturalWidth > 0) {
-    // Pilt juba cache'is - kohe algusse
     requestAnimationFrame(startAnimation);
   } else {
-    // Ootame laadimist
     lightboxImg.onload = () => {
       requestAnimationFrame(startAnimation);
     };
@@ -371,7 +402,6 @@ function closeLightbox() {
   lightbox.classList.remove('ready');
   lightbox.classList.add('closing');
 
-  // Kui source elementi pole, lihtsalt sulgeme
   if (!sourceElement) {
     lightbox.classList.remove('open', 'closing');
     lightboxImg.classList.remove('animate');
@@ -380,7 +410,6 @@ function closeLightbox() {
     return;
   }
 
-  // Arvuta transform algsesse positsiooni
   const sourceRect = sourceElement.getBoundingClientRect();
   const targetRect = lightboxImg.getBoundingClientRect();
 
@@ -389,7 +418,6 @@ function closeLightbox() {
   const translateX = sourceRect.left + sourceRect.width / 2 - (targetRect.left + targetRect.width / 2);
   const translateY = sourceRect.top + sourceRect.height / 2 - (targetRect.top + targetRect.height / 2);
 
-  // Veendume et animate klass on peal
   lightboxImg.classList.add('animate');
 
   requestAnimationFrame(() => {
@@ -397,7 +425,6 @@ function closeLightbox() {
       `translate(-50%, -50%) translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
   });
 
-  // Pärast animatsiooni
   setTimeout(() => {
     lightbox.classList.remove('open', 'closing');
     lightboxImg.classList.remove('animate');
@@ -411,11 +438,9 @@ function switchLightboxImage(newIndex) {
   lightboxIndex = newIndex;
   const url = currentGalleryUrls[newIndex];
 
-  // Lihtne lihtne - vahetame pildi ära, jääb keskele
   lightboxImg.classList.remove('animate');
   lightboxImg.src = url;
 
-  // Uuenda sourceElement
   const gallery = document.getElementById('detail-gallery');
   const items = gallery.querySelectorAll('.detail-gallery-item');
   if (items[newIndex]) {
@@ -449,7 +474,6 @@ function updateLightboxArrows() {
   nextBtn.disabled = lightboxIndex >= currentGalleryUrls.length - 1;
 }
 
-// Kuulajad
 document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
 document.getElementById('lightbox-backdrop').addEventListener('click', closeLightbox);
 document.getElementById('lightbox-img').addEventListener('click', closeLightbox);
@@ -463,13 +487,17 @@ document.getElementById('lightbox-next').addEventListener('click', (e) => {
   lightboxNext();
 });
 
-// Klaviatuur
 document.addEventListener('keydown', (e) => {
   if (!lightbox.classList.contains('open')) return;
   if (e.key === 'Escape') closeLightbox();
   if (e.key === 'ArrowLeft') lightboxPrev();
   if (e.key === 'ArrowRight') lightboxNext();
 });
+
+
+// ====================================================
+// DETAILPANEELI TÄITMINE
+// ====================================================
 
 function fillDetailPanel(h) {
   // Aadress
@@ -496,15 +524,12 @@ function fillDetailPanel(h) {
         const nimi = [o.eesnimi, o.isanimi, o.perenimi]
           .filter(Boolean).join(' ');
 
-        // Kui nimi puudub, aga asutus on olemas → kasuta asutust
-        // Kui mõlemad puuduvad → jäta vahele
         const displayName = nimi || o.asutus || '';
         if (!displayName) return null;
 
         const meta = [];
         if (o.amet) meta.push(o.amet);
         if (o.sugu) meta.push(o.sugu);
-        // Asutus läheb metasse ainult siis kui nimi ON (muidu asutus on juba põhinimeks)
         if (o.asutus && nimi) meta.push(o.asutus);
 
         const metaHtml = meta.length
@@ -538,7 +563,7 @@ function fillDetailPanel(h) {
     `);
   }
 
-  // Korruste arv - näita ainult neid veerge kus väärtus olemas
+  // Korruste arv
   const kvanas = h.korruseid_vanas ? parseFloat(h.korruseid_vanas) : null;
   const kuues = h.korruseid_uues ? parseFloat(h.korruseid_uues) : null;
   if (kvanas !== null || kuues !== null) {
@@ -567,7 +592,7 @@ function fillDetailPanel(h) {
     `);
   }
 
-  // Tubade arv - näita ainult neid veerge kus väärtus olemas
+  // Tubade arv
   const roomRows = [];
   const roomLabels = [
     ['kortereid_1', '1-toalisi'],
@@ -672,6 +697,9 @@ function fillDetailPanel(h) {
   }
 
   content.innerHTML = parts.join('');
+
+  // 3D mudeli nupp - kontrolli kas sellel hoonel on 3D mudel
+  setup3DButton(h);
 }
 
 
@@ -700,10 +728,8 @@ function houseMatchesFilters(h, f, year) {
   if (ownerMatchIds !== null && !ownerMatchIds.has(h.id)) return false;
   if (f.vesi && h.vesi !== f.vesi) return false;
 
-  // Kuivkäimla - spetsiaalne "puudub" variant
   if (f.kuivkaimla) {
     if (f.kuivkaimla === '__puudub__') {
-      // Andmebaasis on see null
       if (h.kuivkaimla) return false;
     } else {
       if (h.kuivkaimla !== f.kuivkaimla) return false;
@@ -780,7 +806,10 @@ function handleOwnerSearch() {
   }, 400);
 }
 
-// kaardi vahetus
+
+// ====================================================
+// KAARDI VAHETUS
+// ====================================================
 
 function switchBaseMap(value) {
   if (value === 'current') {
@@ -800,12 +829,11 @@ historicMapSelect.addEventListener('change', (e) => {
   switchBaseMap(e.target.value);
 });
 
-// algseis
 switchBaseMap(historicMapSelect.value);
 
 
 // ====================================================
-// AJARIBA — 1870 kuni 1920!
+// AJARIBA
 // ====================================================
 
 const slider = document.getElementById('slider');
