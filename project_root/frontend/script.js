@@ -1,12 +1,6 @@
 // ====================================================
 // TARTU AJALOOMAJAD · PEASKRIPT
-// ====================================================
-// See fail sisaldab kogu loogikat:
-//   - kaardi loomine
-//   - markerite (pin-ide) lisamine
-//   - ajariba ja filtreerimine
-// Andmed tulevad failist data.js (muutuja houses)
-// ====================================================
+
  
  
 // ---- Placeholder pildid (kuni päris pildid puuduvad) ----
@@ -47,7 +41,7 @@ function createPin(house) {
  
   const marker = L.marker([house.lat, house.lng], { icon });
  
-  // Pildi stiil (päris pilt või placeholder gradient)
+  // Pildi stiil
   const gradient = placeholderGradients[house.id % placeholderGradients.length];
   const imageStyle = house.image
     ? "background-image: url('${house.image}')"
@@ -55,22 +49,30 @@ function createPin(house) {
  
   // Tagid
   const waterTag = house.water
-    ? '<span class="tag has-water">vesi ✓</span>'
-    : '<span class="tag">vesi ✗</span>';
+    ? `<span class="tag has-water">vesi ✓</span>`
+    : `<span class="tag">vesi ✗</span>`;
  
   const demolishedTag = house.demolished
     ? `<span class="tag">lammutatud ${house.demolished}</span>`
-    : '<span class="tag">säilinud</span>';
+    : `<span class="tag">säilinud</span>`;
+ 
+  const purposeTag = `<span class="tag">${house.purpose}</span>`;
+  const materialTag = `<span class="tag">${house.wallMaterial}</span>`;
  
   // Popup sisu
   const popupContent = `
     <div class="popup-image" style="${imageStyle}"></div>
     <div class="popup-body">
       <div class="popup-address">${house.address}</div>
-      <div class="popup-year">ehitatud ${house.built}</div>
+      <div class="popup-year">ehitatud ${house.built} · ${house.district}</div>
       <div class="popup-info">${house.info}</div>
+      <div class="popup-info" style="font-size: 12px; margin-bottom: 10px;">
+        Omanik: <em>${house.owner}</em> · ${house.rooms} tuba · kuivkäimla ${house.outhouse}
+      </div>
       <div class="popup-tags">
         ${waterTag}
+        ${purposeTag}
+        ${materialTag}
         ${demolishedTag}
       </div>
     </div>
@@ -96,25 +98,66 @@ houses.forEach(h => {
 let currentYear = 1900;
  
 function updateVisibleMarkers() {
-  const showWater = document.getElementById('filter-water').checked;
-  const showNoWater = document.getElementById('filter-no-water').checked;
+  // Loe filtrite väärtused
+  const onlyWater = document.getElementById('filter-water').checked;
+  const outhouse = document.getElementById('filter-outhouse').value;
+  const purpose = document.getElementById('filter-purpose').value;
+  const material = document.getElementById('filter-material').value;
+  const rooms = document.getElementById('filter-rooms').value;
+  const owner = document.getElementById('filter-owner').value.trim().toLowerCase();
+  const street = document.getElementById('filter-street').value.trim().toLowerCase();
+  const district = document.getElementById('filter-district').value;
  
   let visibleCount = 0;
  
   markers.forEach(m => {
     const h = m.houseData;
-    // Kas maja eksisteerib valitud aastal?
+ 
+    // 1. Aasta kontroll
     const existsInYear = h.built <= currentYear &&
                          (h.demolished === null || h.demolished >= currentYear);
-    // Kas maja vastab filtrile?
-    const matchesFilter = (h.water && showWater) || (!h.water && showNoWater);
- 
-    if (existsInYear && matchesFilter) {
-      if (!map.hasLayer(m)) m.addTo(map);
-      visibleCount++;
-    } else {
+    if (!existsInYear) {
       if (map.hasLayer(m)) map.removeLayer(m);
+      return;
     }
+ 
+    // 2. Kõik filtrid (AND-loogika - kõik peavad sobima)
+    if (onlyWater && !h.water) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+    if (outhouse && h.outhouse !== outhouse) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+    if (purpose && h.purpose !== purpose) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+    if (material && h.wallMaterial !== material) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+    if (rooms && h.rooms !== parseInt(rooms)) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+    if (owner && !h.owner.toLowerCase().includes(owner)) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+    if (street && !h.street.toLowerCase().includes(street)) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+    if (district && h.district !== district) {
+      if (map.hasLayer(m)) map.removeLayer(m);
+      return;
+    }
+ 
+    // Maja vastab kõigile filtritele - näita
+    if (!map.hasLayer(m)) m.addTo(map);
+    visibleCount++;
   });
  
   document.getElementById('visible-count').textContent = visibleCount;
@@ -149,8 +192,37 @@ slider.noUiSlider.on('update', (values) => {
  
  
 // ---- FILTRITE KUULAJAD ----
-document.getElementById('filter-water').addEventListener('change', updateVisibleMarkers);
-document.getElementById('filter-no-water').addEventListener('change', updateVisibleMarkers);
+const filterIds = [
+  'filter-water',
+  'filter-outhouse',
+  'filter-purpose',
+  'filter-material',
+  'filter-rooms',
+  'filter-owner',
+  'filter-street',
+  'filter-district',
+];
+ 
+filterIds.forEach(id => {
+  const el = document.getElementById(id);
+  // Checkbox/select kasutavad 'change', text input 'input' (et reageeriks tippimisele)
+  const eventType = el.type === 'text' ? 'input' : 'change';
+  el.addEventListener(eventType, updateVisibleMarkers);
+});
+ 
+ 
+// ---- LÄHTESTA NUPP ----
+document.getElementById('reset-filters').addEventListener('click', () => {
+  document.getElementById('filter-water').checked = false;
+  document.getElementById('filter-outhouse').value = '';
+  document.getElementById('filter-purpose').value = '';
+  document.getElementById('filter-material').value = '';
+  document.getElementById('filter-rooms').value = '';
+  document.getElementById('filter-owner').value = '';
+  document.getElementById('filter-street').value = '';
+  document.getElementById('filter-district').value = '';
+  updateVisibleMarkers();
+});
  
  
 // ---- ALGNE KUVAMINE ----
