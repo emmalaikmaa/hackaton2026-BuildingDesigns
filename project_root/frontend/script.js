@@ -204,6 +204,8 @@ function buildGallery(urls) {
   const nextBtn = document.getElementById('gallery-next');
 
   gallery.classList.remove('empty');
+  urls = urls.map(url => url.replace('.tif', '.jpg'));
+
   currentGalleryUrls = urls || [];
   currentGalleryIndex = 0;
 
@@ -217,7 +219,7 @@ function buildGallery(urls) {
 
   // Piltide listid
   const items = urls.map((url, i) =>
-    `<div class="detail-gallery-item" style="background-image: url('${url}');" data-index="${i}"></div>`
+    `<div class="detail-gallery-item" style="background-image: url('${url.replace('.tif', '.jpg')}');" data-index="${i}"></div>`
   ).join('');
 
   gallery.innerHTML = items;
