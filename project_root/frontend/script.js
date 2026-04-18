@@ -267,7 +267,7 @@ const slider = document.getElementById('slider');
 noUiSlider.create(slider, {
   start: [1900],
   connect: [true, false],
-  range: { min: 1870, max: 1940 },
+  range: { min: 1870, max: 1920 },
   step: 1,
   tooltips: true,
   format: {
@@ -276,7 +276,7 @@ noUiSlider.create(slider, {
   },
   pips: {
     mode: 'values',
-    values: [1870, 1880, 1890, 1900, 1910, 1920, 1930, 1940],
+    values: [1870, 1880, 1890, 1900, 1910, 1920],
     density: 5,
   },
 });
