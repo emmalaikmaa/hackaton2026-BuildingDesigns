@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from server.database import get_db
 from server.models import Building
 from server.schemas import BuildingPin, BuildingDetail, OwnerDetail
+from server.models import Building, Owner
 
 router = APIRouter(prefix="/buildings", tags=["buildings"])
 
@@ -19,7 +20,29 @@ def get_buildings(db: Session = Depends(get_db)):
         Building.longitude.isnot(None),
     ).all()
 
-
+@router.get("/search/owners")
+def search_by_owner(name: str, db: Session = Depends(get_db)):
+    """
+    Tagastab hoone ID-d, mille omanik vastab nimele (osaline vaste).
+    Otsib eesnimi, isanimi, perenimi väljadel.
+    """
+    name_lower = f"%{name.lower()}%"
+    
+    # Leia kõik omanikud, kelle nimes on see tekst
+    owners = db.query(Owner).filter(
+        (Owner.eesnimi.ilike(name_lower)) |
+        (Owner.isanimi.ilike(name_lower)) |
+        (Owner.perenimi.ilike(name_lower))
+    ).all()
+    
+    # Kogu nende omanike hoonete ID-d
+    building_ids = set()
+    for owner in owners:
+        for building in owner.buildings:
+            building_ids.add(building.id)
+    
+    return {"building_ids": list(building_ids)}
+    
 @router.get("/{building_id}", response_model=BuildingDetail)
 def get_building(building_id: int, request: Request, db: Session = Depends(get_db)):
     """Ühe hoone detailne info koos omanikega ja piltide URL-idega."""
