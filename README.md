@@ -2,7 +2,7 @@
 
 An interactive map application featuring a PostgreSQL database, FastAPI backend, and HTML/JS frontend. Browse and explore building designs in Tartu with an image gallery powered by a curated dataset.
 
-> 🎥 **[Watch a demo of the application](https://drive.google.com/file/d/13iqr7BfmkNZZD7IyfRyvUMWd-KmfnSFf/view?usp=share_link)**
+> **[Watch a demo of the application](https://drive.google.com/file/d/13iqr7BfmkNZZD7IyfRyvUMWd-KmfnSFf/view?usp=share_link)**
 
 ---
 
@@ -12,7 +12,11 @@ The building pictures displayed in the application come from a **privately owned
 
 Without approval, the app will run but the image gallery will be empty.
 
+For access to dataset images, please contact the **[Estonian National Archives](https://www.ra.ee)**
+
 Once approved, place the received image files inside the `pildid/` folder in the project root (see setup steps below).
+
+**[Link to the dataset description](https://www.etkad.ee/humal/building-projects-in-tartu/)**
 
 ---
 
